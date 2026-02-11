@@ -202,15 +202,12 @@
                         <h2 id="summary-winrate" class="text-2xl font-mono font-bold text-white">0%</h2>
                         <span id="summary-wincount" class="text-xs text-slate-500">0W - 0L</span>
                     </div>
-                    <div class="glass-panel p-4 rounded-xl border-l-4 border-green-500">
-                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Best Day</p>
-                        <h2 id="summary-best" class="text-2xl font-mono font-bold text-green-400">0.00</h2>
-                        <span id="summary-best-date" class="text-xs text-slate-500">-</span>
-                    </div>
-                    <div class="glass-panel p-4 rounded-xl border-l-4 border-red-500">
-                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Worst Day</p>
-                        <h2 id="summary-worst" class="text-2xl font-mono font-bold text-red-400">0.00</h2>
-                        <span id="summary-worst-date" class="text-xs text-slate-500">-</span>
+                    
+                    
+                    <div class="glass-panel p-4 rounded-xl border-l-4 border-amber-400">
+                        <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Total Trades</p>
+                        <h2 id="summary-totaltrades" class="text-2xl font-mono font-bold text-white">0</h2>
+                        <span class="text-xs text-slate-500">Total number of trades</span>
                     </div>
                 </div>
 
@@ -272,7 +269,8 @@
                                 </div>
                             </div>
                             <div class="relative w-full h-[300px]">
-                                <canvas id="pnlChart"></canvas>
+                                <canvas id="pnlChart" class="absolute inset-0 w-full h-full"></canvas>
+                                <canvas id="tradesChart" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
                             </div>
                         </div>
                     </div>

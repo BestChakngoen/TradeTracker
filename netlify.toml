@@ -1,0 +1,12 @@
+[build]
+  # For a plain static site with no build step, publish the repo root
+  publish = "."
+  command = ""
+
+[dev]
+  # Optional: command to run a local dev server when using `netlify dev`
+  command = "npx http-server -p 8888"
+
+[context.production.environment]
+  # Pin Node version if needed by any tooling; not required for plain HTML
+  NODE_VERSION = "16"

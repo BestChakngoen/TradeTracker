@@ -24,7 +24,9 @@ export class UIManager {
             list: document.getElementById('history-list')
         };
         this.chart = null;
+        this.tradesChart = null;
         this.initChart();
+        this.initTradesChart();
     }
 
     initChart() {
@@ -33,8 +35,39 @@ export class UIManager {
         Chart.defaults.color = '#64748b';
         this.chart = new Chart(ctx, {
             type: 'bar',
-            data: { labels: [], datasets: [{ label: 'Net P&L', data: [], backgroundColor: c => c.raw>=0?'#22c55e':'#ef4444', borderRadius: 4 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false} }, scales: { x: {grid:{display:false}}, y: {grid:{color:'rgba(255,255,255,0.05)'}} } }
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Net P&L', data: [], backgroundColor: c => c.raw>=0 ? '#22c55e' : '#ef4444', borderRadius: 4, yAxisID: 'pnl', order: 1 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false } },
+                    pnl: { position: 'left', grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
+            }
+        });
+    }
+
+    initTradesChart() {
+        const ctx2 = document.getElementById('tradesChart').getContext('2d');
+        this.tradesChart = new Chart(ctx2, {
+            type: 'line',
+            data: { labels: [], datasets: [ { label: 'Trades', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.15)', tension: 0.25, pointRadius: 4, borderWidth: 2 } ] },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: { position: 'right', grid: { display: false }, ticks: { color: '#f59e0b', stepSize: 1, beginAtZero: true }, beginAtZero: true, suggestedMax: 5 }
+                },
+                elements: { line: { fill: false } }
+            }
         });
     }
 
@@ -114,6 +147,7 @@ export class UIManager {
     updateStats(trades) {
         let net=0, dep=0, wd=0, wins=0, losses=0, best=-Infinity, worst=Infinity;
         const daily = {};
+        const counts = {};
 
         trades.forEach(t => {
             let type = t.type || (t.amount >= 0 ? 'WIN' : 'LOSS');
@@ -123,6 +157,7 @@ export class UIManager {
                 net += t.amount;
                 if(t.amount > 0) wins++; else losses++;
                 daily[t.date] = (daily[t.date] || 0) + t.amount;
+                counts[t.date] = (counts[t.date] || 0) + 1;
             }
         });
 
@@ -149,14 +184,36 @@ export class UIManager {
 
         document.getElementById('summary-winrate').innerText = (wins+losses > 0 ? ((wins/(wins+losses))*100).toFixed(1) : 0) + '%';
         document.getElementById('summary-wincount').innerText = `${wins}W - ${losses}L`;
-        document.getElementById('summary-best').innerText = (best>0?'+':'')+best.toFixed(2);
-        document.getElementById('summary-worst').innerText = worst.toFixed(2);
 
         // Chart
         const dates = Object.keys(daily).sort((a,b)=>new Date(a)-new Date(b));
         this.chart.data.labels = dates;
         this.chart.data.datasets[0].data = dates.map(d => daily[d]);
         this.chart.update();
+
+        if(this.tradesChart) {
+            this.tradesChart.data.labels = dates;
+            const dataArr = dates.map(d => counts[d] || 0);
+            this.tradesChart.data.datasets[0].data = dataArr;
+
+            // Dynamically adjust y-axis max so the trades line fits and is visible
+            const maxCount = dataArr.length ? Math.max(...dataArr) : 0;
+            const padding = Math.ceil(maxCount * 0.25) || 1;
+            const suggested = Math.max(5, maxCount + padding);
+            if(!this.tradesChart.options) this.tradesChart.options = {};
+            if(!this.tradesChart.options.scales) this.tradesChart.options.scales = {};
+            this.tradesChart.options.scales.y = this.tradesChart.options.scales.y || {};
+            this.tradesChart.options.scales.y.suggestedMax = suggested;
+            this.tradesChart.options.scales.y.ticks = this.tradesChart.options.scales.y.ticks || {};
+            this.tradesChart.options.scales.y.ticks.stepSize = maxCount > 10 ? Math.ceil((suggested) / 10) : 1;
+
+            this.tradesChart.update();
+        }
+
+        // Total trades (count of WIN/LOSS entries)
+        const totalTrades = Object.values(counts).reduce((s,v)=>s+v, 0);
+        const totalEl = document.getElementById('summary-totaltrades');
+        if(totalEl) totalEl.innerText = totalTrades;
     }
 
     switchTab(tabName) {
