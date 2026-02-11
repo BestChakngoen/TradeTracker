@@ -33,6 +33,7 @@ export class UIManager {
         const ctx = document.getElementById('pnlChart').getContext('2d');
         Chart.defaults.font.family = 'Rajdhani';
         Chart.defaults.color = '#64748b';
+        Chart.register(ChartDataLabels);
         this.chart = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -45,7 +46,14 @@ export class UIManager {
                         borderRadius: 4, 
                         yAxisID: 'pnl', 
                         order: 1,
-                        barPercentage: 0.7
+                        barPercentage: 0.7,
+                        datalabels: {
+                            color: function(context) {
+                                const value = context.dataset.data[context.dataIndex];
+                                if(value < 0) return '#ff0000';
+                                return '#22c55e';
+                            }
+                        }
                     },
                     {
                         label: 'Orders',
@@ -56,15 +64,38 @@ export class UIManager {
                         borderRadius: 2,
                         yAxisID: 'trades',
                         order: 2,
-                        barPercentage: 0.7
+                        barPercentage: 0.7,
+                        datalabels: {
+                            color: '#f59e0b'
+                        }
                     }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 40,
+                        right: 10,
+                        bottom: 10,
+                        left: 10
+                    }
+                },
                 plugins: { 
                     legend: { display: false },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        font: { size: 12, weight: 'bold', family: 'Rajdhani' },
+                        formatter: function(value, context) {
+                            if(value === 0 || value === null) return '';
+                            if(context.dataset.label.includes('Orders')) {
+                                return value + '';
+                            }
+                            return value.toFixed(2);
+                        }
+                    },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
