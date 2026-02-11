@@ -1,0 +1,16 @@
+{
+  "name": "tradetracker-web",
+  "version": "1.0.0",
+  "description": "Trade Tracker Web App",
+  "scripts": {
+    "build": "tailwindcss -i ./style.css -o ./dist/style.css",
+    "watch": "tailwindcss -i ./style.css -o ./dist/style.css --watch",
+    "dev": "npm run watch & npx http-server -p 8888"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "tailwindcss": "^3.4.1",
+    "postcss": "^8.4.32",
+    "autoprefixer": "^10.4.16"
+  }
+}

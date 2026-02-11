@@ -38,37 +38,73 @@ export class UIManager {
             data: {
                 labels: [],
                 datasets: [
-                    { label: 'Net P&L', data: [], backgroundColor: c => c.raw>=0 ? '#22c55e' : '#ef4444', borderRadius: 4, yAxisID: 'pnl', order: 1 }
+                    { 
+                        label: 'Net P&L', 
+                        data: [], 
+                        backgroundColor: c => c.raw>=0 ? '#22c55e' : '#ef4444', 
+                        borderRadius: 4, 
+                        yAxisID: 'pnl', 
+                        order: 1,
+                        barPercentage: 0.7
+                    },
+                    {
+                        label: 'Orders',
+                        data: [],
+                        backgroundColor: '#f59e0b',
+                        borderColor: '#fbbf24',
+                        borderWidth: 0,
+                        borderRadius: 2,
+                        yAxisID: 'trades',
+                        order: 2,
+                        barPercentage: 0.7
+                    }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const value = context.parsed.y;
+                                if(label.includes('Orders')) {
+                                    return label + ': ' + value + ' orders';
+                                }
+                                return label + ': ' + value.toFixed(2);
+                            }
+                        }
+                    }
+                },
                 scales: {
-                    x: { grid: { display: false } },
-                    pnl: { position: 'left', grid: { color: 'rgba(255,255,255,0.05)' } }
+                    x: { 
+                        grid: { display: false },
+                        offset: true,
+                        categoryPercentage: 1.0
+                    },
+                    pnl: { 
+                        position: 'left', 
+                        grid: { color: 'rgba(255,255,255,0.05)' },
+                        title: { display: true, text: 'P&L (USD)' }
+                    },
+                    trades: {
+                        position: 'right',
+                        grid: { display: false },
+                        ticks: { color: '#f59e0b', stepSize: 1, beginAtZero: true, font: { size: 11, weight: 'bold' } },
+                        beginAtZero: true,
+                        title: { display: true, text: 'Orders' }
+                    }
                 }
             }
         });
     }
 
     initTradesChart() {
-        const ctx2 = document.getElementById('tradesChart').getContext('2d');
-        this.tradesChart = new Chart(ctx2, {
-            type: 'line',
-            data: { labels: [], datasets: [ { label: 'Trades', data: [], borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.15)', tension: 0.25, pointRadius: 4, borderWidth: 2 } ] },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { display: false },
-                    y: { position: 'right', grid: { display: false }, ticks: { color: '#f59e0b', stepSize: 1, beginAtZero: true }, beginAtZero: true, suggestedMax: 5 }
-                },
-                elements: { line: { fill: false } }
-            }
-        });
+        // Trades chart no longer needed - data is now on main pnl chart
+        // This method kept for backward compatibility but does nothing
+        return;
     }
 
     showLogin(show) {
@@ -100,10 +136,12 @@ export class UIManager {
     }
 
     updateTHB(rate) {
-        if(rate) {
+        if(rate && this.dom.displays && this.dom.displays.thb) {
             this.dom.displays.thb.style.color = '#4ade80';
-            this.dom.displays.thb.innerText = `${rate.toFixed(2)} ฿`;
-            setTimeout(() => this.dom.displays.thb.style.color = 'white', 500);
+            this.dom.displays.thb.innerText = `${parseFloat(rate).toFixed(2)} ฿`;
+            setTimeout(() => {
+                if(this.dom.displays.thb) this.dom.displays.thb.style.color = 'white';
+            }, 500);
         }
     }
 
@@ -119,6 +157,8 @@ export class UIManager {
         [...trades].sort((a,b) => b.id - a.id).forEach(t => {
             let borderClass = 'border-green-500', textClass = 'text-green-400', label = 'WIN';
             let type = t.type || (t.amount >= 0 ? 'WIN' : 'LOSS'); // Backward compat
+            // Ensure date is a valid string
+            const dateStr = (t.date && typeof t.date === 'string' && t.date.match(/^\d{4}-\d{2}-\d{2}/)) ? t.date : 'N/A';
 
             if(type === 'LOSS') { borderClass = 'border-red-500'; textClass = 'text-red-400'; label = 'LOSS'; }
             else if(type === 'DEPOSIT') { borderClass = 'border-blue-500'; textClass = 'text-blue-400'; label = 'DEPOSIT'; }
@@ -130,7 +170,7 @@ export class UIManager {
                 <div>
                     <div class="flex items-center gap-2">
                         <span class="font-bold font-mono text-slate-200">${t.asset}</span>
-                        <span class="text-xs text-slate-500 bg-slate-900 px-1 rounded">${t.date}</span>
+                        <span class="text-xs text-slate-500 bg-slate-900 px-1 rounded">${dateStr}</span>
                     </div>
                     <div class="text-xs ${textClass} font-bold">${label}</div>
                 </div>
@@ -145,75 +185,130 @@ export class UIManager {
     }
 
     updateStats(trades) {
-        let net=0, dep=0, wd=0, wins=0, losses=0, best=-Infinity, worst=Infinity;
-        const daily = {};
-        const counts = {};
+        try {
+            let net=0, dep=0, wd=0, wins=0, losses=0, best=-Infinity, worst=Infinity;
+            const daily = {};
+            const counts = {};
 
-        trades.forEach(t => {
-            let type = t.type || (t.amount >= 0 ? 'WIN' : 'LOSS');
-            if (type === 'DEPOSIT') dep += t.amount;
-            else if (type === 'WITHDRAW') wd += Math.abs(t.amount);
-            else {
-                net += t.amount;
-                if(t.amount > 0) wins++; else losses++;
-                daily[t.date] = (daily[t.date] || 0) + t.amount;
-                counts[t.date] = (counts[t.date] || 0) + 1;
+            // Process trades and build daily/counts maps
+            for(let i = 0; i < trades.length; i++) {
+                const t = trades[i];
+                
+                // Extract and validate date
+                let dateStr = '1970-01-01';
+                if(t.date) {
+                    const dateType = typeof t.date;
+                    if(dateType === 'string') {
+                        const match = String(t.date).match(/^\d{4}-\d{2}-\d{2}/);
+                        if(match) dateStr = match[0];
+                    } else if(dateType === 'object' && typeof t.date.toISOString === 'function') {
+                        dateStr = t.date.toISOString().split('T')[0];
+                    }
+                }
+
+                const type = t.type || (t.amount >= 0 ? 'WIN' : 'LOSS');
+                const amount = Number(t.amount) || 0;
+                
+                if (type === 'DEPOSIT') dep += amount;
+                else if (type === 'WITHDRAW') wd += Math.abs(amount);
+                else {
+                    net += amount;
+                    if(amount > 0) wins++; else losses++;
+                    daily[dateStr] = (daily[dateStr] || 0) + amount;
+                    counts[dateStr] = (counts[dateStr] || 0) + 1;
+                }
             }
-        });
 
-        const fund = dep - wd;
-        const roi = fund > 0 ? (net/fund)*100 : 0;
-        
-        for(const v of Object.values(daily)) {
-            if(v > best) best = v;
-            if(v < worst) worst = v;
+            const fund = dep - wd;
+            const roi = fund > 0 ? (net/fund)*100 : 0;
+            
+            for(const v of Object.values(daily)) {
+                if(v > best) best = v;
+                if(v < worst) worst = v;
+            }
+            if(best === -Infinity) best = 0;
+            if(worst === Infinity || worst > 0) worst = 0;
+
+            // DOM Updates
+            document.getElementById('summary-balance').innerText = (fund+net).toFixed(2);
+            document.getElementById('summary-fund').innerText = fund.toFixed(2);
+            const pEl = document.getElementById('summary-profit');
+            pEl.innerText = (net>=0?'+':'')+net.toFixed(2);
+            pEl.className = `text-2xl font-mono font-bold ${net>=0?'text-green-400':'text-red-400'}`;
+            
+            const roiEl = document.getElementById('summary-roi');
+            roiEl.innerText = `${roi.toFixed(1)}% ROI`;
+            roiEl.className = `text-xs ${roi>=0?'text-green-400':'text-red-400'}`;
+
+            document.getElementById('summary-winrate').innerText = (wins+losses > 0 ? ((wins/(wins+losses))*100).toFixed(1) : 0) + '%';
+            document.getElementById('summary-wincount').innerText = `${wins}W - ${losses}L`;
+
+            // Build chart labels and data arrays - ensure all are primitives (strings/numbers)
+            const dateLabels = [];
+            const pnlData = [];
+            const tradesData = [];
+
+            Object.keys(daily).forEach(key => {
+                // Only include valid date strings
+                if(typeof key === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(key)) {
+                    dateLabels.push(key);
+                    pnlData.push(Number(daily[key]) || 0);
+                    tradesData.push(Number(counts[key]) || 0);
+                }
+            });
+
+            // Sort by date
+            const indices = dateLabels.map((d, i) => ({ d, i }))
+                .sort((a, b) => new Date(a.d) - new Date(b.d))
+                .map(x => x.i);
+            
+            const sortedLabels = indices.map(i => dateLabels[i]);
+            const sortedPnl = indices.map(i => pnlData[i]);
+            const sortedTrades = indices.map(i => tradesData[i]);
+
+            // Update PnL chart with clean data
+            if(this.chart && this.chart.data) {
+                this.chart.data.labels = sortedLabels;
+                if(this.chart.data.datasets) {
+                    // Update P&L data (dataset 0)
+                    if(this.chart.data.datasets[0]) {
+                        this.chart.data.datasets[0].data = sortedPnl;
+                    }
+                    // Update Trades count data (dataset 1)
+                    if(this.chart.data.datasets[1]) {
+                        this.chart.data.datasets[1].data = sortedTrades;
+                    }
+                }
+                this.chart.update();
+            }
+
+            // Total trades
+            const totalTrades = wins + losses;
+            const totalEl = document.getElementById('summary-totaltrades');
+            if(totalEl) totalEl.innerText = totalTrades;
+        } catch (e) {
+            console.error('Error in updateStats:', e);
         }
-        if(best === -Infinity) best = 0;
-        if(worst === Infinity || worst > 0) worst = 0;
+    }
 
-        // DOM Updates
-        document.getElementById('summary-balance').innerText = (fund+net).toFixed(2);
-        document.getElementById('summary-fund').innerText = fund.toFixed(2);
-        const pEl = document.getElementById('summary-profit');
-        pEl.innerText = (net>=0?'+':'')+net.toFixed(2);
-        pEl.className = `text-2xl font-mono font-bold ${net>=0?'text-green-400':'text-red-400'}`;
-        
-        const roiEl = document.getElementById('summary-roi');
-        roiEl.innerText = `${roi.toFixed(1)}% ROI`;
-        roiEl.className = `text-xs ${roi>=0?'text-green-400':'text-red-400'}`;
-
-        document.getElementById('summary-winrate').innerText = (wins+losses > 0 ? ((wins/(wins+losses))*100).toFixed(1) : 0) + '%';
-        document.getElementById('summary-wincount').innerText = `${wins}W - ${losses}L`;
-
-        // Chart
-        const dates = Object.keys(daily).sort((a,b)=>new Date(a)-new Date(b));
-        this.chart.data.labels = dates;
-        this.chart.data.datasets[0].data = dates.map(d => daily[d]);
-        this.chart.update();
-
-        if(this.tradesChart) {
-            this.tradesChart.data.labels = dates;
-            const dataArr = dates.map(d => counts[d] || 0);
-            this.tradesChart.data.datasets[0].data = dataArr;
-
-            // Dynamically adjust y-axis max so the trades line fits and is visible
-            const maxCount = dataArr.length ? Math.max(...dataArr) : 0;
-            const padding = Math.ceil(maxCount * 0.25) || 1;
-            const suggested = Math.max(5, maxCount + padding);
-            if(!this.tradesChart.options) this.tradesChart.options = {};
-            if(!this.tradesChart.options.scales) this.tradesChart.options.scales = {};
-            this.tradesChart.options.scales.y = this.tradesChart.options.scales.y || {};
-            this.tradesChart.options.scales.y.suggestedMax = suggested;
-            this.tradesChart.options.scales.y.ticks = this.tradesChart.options.scales.y.ticks || {};
-            this.tradesChart.options.scales.y.ticks.stepSize = maxCount > 10 ? Math.ceil((suggested) / 10) : 1;
-
-            this.tradesChart.update();
-        }
-
-        // Total trades (count of WIN/LOSS entries)
-        const totalTrades = Object.values(counts).reduce((s,v)=>s+v, 0);
+    // Apply cloud-provided meta (optional). Expected shape: { totalTrades: number, counts: { date: number } }
+    updateCloudStats(meta) {
+        console.log('updateCloudStats called with meta:', meta);
+        if(!meta) return;
         const totalEl = document.getElementById('summary-totaltrades');
-        if(totalEl) totalEl.innerText = totalTrades;
+        if(!totalEl) return;
+        // Accept numbers or numeric strings from cloud
+        const val = (meta && meta.totalTrades != null) ? Number(meta.totalTrades) : NaN;
+        if(isNaN(val)) return;
+        const cur = Number(totalEl.innerText) || 0;
+        // Use Firebase value only if it's greater than current (prefer live calculation)
+        if(val > cur) {
+            totalEl.innerText = val;
+            totalEl.style.color = '#38bdf8';
+            setTimeout(() => totalEl.style.color = 'white', 500);
+        }
+        // if meta.counts exists we could choose to prefer it for tradesChart data, but current implementation
+        // uses live trades array for plotting; meta is used here mainly to reflect cloud-synced totals.
     }
 
     switchTab(tabName) {

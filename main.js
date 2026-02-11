@@ -21,10 +21,12 @@ export class TradeApp {
             if(user) {
                 this.ui.showLogin(false);
                 document.getElementById('user-display-name').innerText = `// ${user.email}`;
-                this.data.subscribeTrades(user.uid, (data) => {
+                this.data.subscribeTrades(user.uid, (data, meta) => {
                     this.trades = data;
                     this.ui.renderTradeList(data, (id) => this.handleDelete(id));
                     this.ui.updateStats(data);
+                    console.log('subscribeTrades meta:', meta);
+                    if(meta) this.ui.updateCloudStats(meta);
                 }, (err) => console.error(err));
                 this.startMarketLoops();
             } else {
@@ -129,7 +131,9 @@ export class TradeApp {
 
     async handleDelete(id) {
         if(confirm('Delete record?')) {
-            await this.data.deleteTrade(this.auth.currentUser.uid, id);
+            // find trade object to allow meta update
+            const trade = this.trades.find(t => t.firestoreId === id);
+            await this.data.deleteTrade(this.auth.currentUser.uid, id, trade);
         }
     }
 
@@ -170,12 +174,18 @@ export class TradeApp {
     // Live price removed: no updatePrice method
 
     async updateTHB() {
-        const rate = await this.market.fetchTHB();
-        this.ui.updateTHB(rate);
+        try {
+            const rate = await this.market.fetchTHB();
+            if(rate) this.ui.updateTHB(rate);
+        } catch (e) {
+            console.warn('updateTHB error:', e);
+        }
     }
 
     startMarketLoops() {
-        setInterval(() => this.updateTHB(), 15000);
+        // Fetch THB rate every 5 minutes instead of 15 seconds to avoid rate limiting
+        this.updateTHB(); // Initial fetch
+        setInterval(() => this.updateTHB(), 300000);
     }
 
     copyDomain() {

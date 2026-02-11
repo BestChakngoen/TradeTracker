@@ -7,6 +7,9 @@ export class MarketService {
             'EUR/USD': 'EURUSDT'
         };
         this.prevPrice = 0;
+        this.thbCache = null;
+        this.thbCacheTime = 0;
+        this.thbCacheDuration = 300000; // 5 minutes
     }
 
     async fetchPrice(asset) {
@@ -46,16 +49,30 @@ export class MarketService {
     }
 
     async fetchTHB() {
-        try {
-            const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=thb');
-            const data = await res.json();
-            return data?.tether?.thb || null;
-        } catch {
-            try {
-                const res2 = await fetch('https://api.frankfurter.app/latest?from=USD&to=THB');
-                const d2 = await res2.json();
-                return d2?.rates?.THB || null;
-                    } catch { return null; }
+        // Check cache first
+        const now = Date.now();
+        if(this.thbCache && now - this.thbCacheTime < this.thbCacheDuration) {
+            return this.thbCache;
         }
+
+        try {
+            const res = await fetch('https://api.frankfurter.app/latest?from=USD&to=THB', {
+                signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : null
+            });
+            if(res.ok) {
+                const d = await res.json();
+                const rate = d?.rates?.THB || null;
+                if(rate) {
+                    this.thbCache = rate;
+                    this.thbCacheTime = now;
+                }
+                return rate;
+            }
+        } catch (e) {
+            console.warn('fetchTHB error:', e.message);
+        }
+
+        // Return cached value if available, even if stale
+        return this.thbCache;
     }
 }
