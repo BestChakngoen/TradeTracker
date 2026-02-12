@@ -184,8 +184,15 @@ export class UIManager {
             return;
         }
 
-        // Reverse clone to show newest first
-        [...trades].sort((a, b) => b.id - a.id).forEach(t => {
+        // FIX: Sort by Date Descending (Newest First) instead of ID
+        // This ensures the order matches the CSV which usually has newest data first
+        // or simply displays the most recent activity at the top.
+        [...trades].sort((a, b) => {
+            // Use date comparison if available, fallback to ID if dates are equal or invalid
+            const dateA = new Date(a.date).getTime();
+            const dateB = new Date(b.date).getTime();
+            return dateB - dateA;
+        }).forEach(t => {
             let borderClass = 'border-green-500', textClass = 'text-green-400', label = 'WIN';
             let type = t.type || (t.amount >= 0 ? 'WIN' : 'LOSS'); // Backward compat
             // Ensure date is a valid string
