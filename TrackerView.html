@@ -1,19 +1,22 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TradeTracker</title>
-    
+
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Rajdhani:wght@500;700&display=swap"
+        rel="stylesheet">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
     <!-- Chart.js Data Labels Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
@@ -54,82 +57,135 @@
             background-image: radial-gradient(#1e293b 1px, transparent 1px);
             background-size: 20px 20px;
         }
+
         .glass-panel {
             background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
         }
-        .neon-text { text-shadow: 0 0 10px rgba(56, 189, 248, 0.5); }
-        .btn-press { transition: all 0.1s; }
-        .btn-press:active { transform: scale(0.95); }
-        
+
+        .neon-text {
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+
+        .btn-press {
+            transition: all 0.1s;
+        }
+
+        .btn-press:active {
+            transform: scale(0.95);
+        }
+
         .nav-active {
             background-color: rgba(56, 189, 248, 0.15);
             border: 1px solid #38bdf8;
             color: #38bdf8;
             box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
         }
-        
+
         /* Input Styles */
-        input, select {
+        input,
+        select {
             background-color: #0f172a;
             border: 1px solid #334155;
             color: white;
             transition: all 0.2s;
         }
-        input:focus, select:focus {
+
+        input:focus,
+        select:focus {
             outline: none;
             border-color: #38bdf8;
             box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
         }
 
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-        
-        .tradingview-widget-container { height: 100%; width: 100%; }
-        
-        .loading-pulse { animation: pulse-blue 2s infinite; }
-        @keyframes pulse-blue {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+        ::-webkit-scrollbar {
+            width: 6px;
         }
-        
-        .price-text { transition: color 0.3s ease; }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+
+        .tradingview-widget-container {
+            height: 100%;
+            width: 100%;
+        }
+
+        .loading-pulse {
+            animation: pulse-blue 2s infinite;
+        }
+
+        @keyframes pulse-blue {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .price-text {
+            transition: color 0.3s ease;
+        }
     </style>
 </head>
+
 <body class="text-slate-200 min-h-screen flex flex-col items-center justify-center">
 
     <!-- LOGIN SCREEN -->
-    <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1121] bg-opacity-95 backdrop-blur-sm">
-        <div class="glass-panel p-8 rounded-2xl max-w-md w-full text-center border border-cyan-500/30 relative overflow-hidden">
-            <div class="absolute inset-0 pointer-events-none opacity-20 bg-gradient-to-b from-transparent via-cyan-500 to-transparent h-[20%] w-full animate-scan"></div>
-            
-            <h1 class="text-4xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 neon-text mb-2">
+    <div id="login-screen"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-[#0b1121] bg-opacity-95 backdrop-blur-sm">
+        <div
+            class="glass-panel p-8 rounded-2xl max-w-md w-full text-center border border-cyan-500/30 relative overflow-hidden">
+            <div
+                class="absolute inset-0 pointer-events-none opacity-20 bg-gradient-to-b from-transparent via-cyan-500 to-transparent h-[20%] w-full animate-scan">
+            </div>
+
+            <h1
+                class="text-4xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 neon-text mb-2">
                 SYSTEM ACCESS
             </h1>
             <p class="text-slate-400 text-sm tracking-[0.2em] mb-8 uppercase">Identity Verification Required</p>
-            
+
             <div class="space-y-4">
-                <button id="btn-login" class="w-full btn-press group relative flex items-center justify-center gap-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-cyan-400 text-white py-4 rounded-xl transition-all shadow-lg hover:shadow-cyan-500/20">
+                <button id="btn-login"
+                    class="w-full btn-press group relative flex items-center justify-center gap-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-cyan-400 text-white py-4 rounded-xl transition-all shadow-lg hover:shadow-cyan-500/20">
                     <svg class="w-6 h-6" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        <path fill="#4285F4"
+                            d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path fill="#34A853"
+                            d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#FBBC05"
+                            d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                        <path fill="#EA4335"
+                            d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                     </svg>
                     <span class="font-mono font-bold tracking-wider group-hover:text-cyan-400">LOGIN WITH GOOGLE</span>
                 </button>
             </div>
 
             <div id="auth-error-box" class="hidden mt-6 pt-4 border-t border-red-500/50">
-                <p class="text-[12px] text-red-400 font-bold mb-2 uppercase tracking-wide animate-pulse">⚠️ DOMAIN NOT AUTHORIZED</p>
-                <div class="bg-red-900/20 p-3 rounded-lg border border-red-500/50 text-center relative group cursor-pointer" id="btn-copy-domain">
+                <p class="text-[12px] text-red-400 font-bold mb-2 uppercase tracking-wide animate-pulse">⚠️ DOMAIN NOT
+                    AUTHORIZED</p>
+                <div class="bg-red-900/20 p-3 rounded-lg border border-red-500/50 text-center relative group cursor-pointer"
+                    id="btn-copy-domain">
                     <p class="text-[10px] text-slate-400 mb-1">Please add this domain to Firebase Console:</p>
-                    <div id="domain-display" class="font-mono text-xs text-white break-all font-bold select-all">...</div>
-                    <div class="absolute inset-0 bg-red-500/10 opacity-0 group-hover:opacity-100 transition flex items-center justify-center backdrop-blur-sm rounded-lg">
+                    <div id="domain-display" class="font-mono text-xs text-white break-all font-bold select-all">...
+                    </div>
+                    <div
+                        class="absolute inset-0 bg-red-500/10 opacity-0 group-hover:opacity-100 transition flex items-center justify-center backdrop-blur-sm rounded-lg">
                         <span class="text-xs font-bold text-white">CLICK TO COPY</span>
                     </div>
                 </div>
@@ -144,13 +200,15 @@
         <!-- Header -->
         <header class="w-full mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
-                <h1 class="text-3xl md:text-5xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 neon-text">
+                <h1
+                    class="text-3xl md:text-5xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 neon-text">
                     TRADE TRACKER
                 </h1>
                 <div class="flex flex-col gap-1 mt-1">
                     <div class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]"></span>
-                        <p class="text-green-400 text-sm tracking-widest uppercase">ONLINE <span id="user-display-name" class="text-slate-400 ml-2 text-xs normal-case"></span></p>
+                        <p class="text-green-400 text-sm tracking-widest uppercase">ONLINE <span id="user-display-name"
+                                class="text-slate-400 ml-2 text-xs normal-case"></span></p>
                     </div>
                     <div class="flex items-center gap-2 text-xs font-mono text-slate-400">
                         <span class="text-amber-400">USD/THB:</span>
@@ -158,14 +216,24 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="flex gap-4 items-center">
                 <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-700">
-                    <button id="tab-journal" class="btn-press px-4 md:px-6 py-2 rounded-lg font-mono font-bold transition-all nav-active text-sm md:text-base">JOURNAL</button>
-                    <button id="tab-market" class="btn-press px-4 md:px-6 py-2 rounded-lg font-mono font-bold transition-all text-slate-500 hover:text-slate-300 text-sm md:text-base">MARKET</button>
+                    <button id="tab-journal"
+                        class="btn-press px-4 md:px-6 py-2 rounded-lg font-mono font-bold transition-all nav-active text-sm md:text-base">JOURNAL</button>
+                    <button id="tab-market"
+                        class="btn-press px-4 md:px-6 py-2 rounded-lg font-mono font-bold transition-all text-slate-500 hover:text-slate-300 text-sm md:text-base">MARKET</button>
+                    <button id="tab-calc"
+                        class="btn-press px-4 md:px-6 py-2 rounded-lg font-mono font-bold transition-all text-slate-500 hover:text-slate-300 text-sm md:text-base whitespace-nowrap">CALCULATOR</button>
                 </div>
-                <button id="btn-logout" class="btn-press p-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10" title="Logout">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                <button id="btn-logout"
+                    class="btn-press p-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10"
+                    title="Logout">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                        </path>
+                    </svg>
                 </button>
             </div>
         </header>
@@ -182,16 +250,20 @@
                         <h2 id="summary-balance" class="text-2xl font-mono font-bold text-blue-400">0.00</h2>
                         <span class="text-xs text-slate-500">Total Equity</span>
                     </div>
-                    <div class="glass-panel p-4 rounded-xl border-l-4 border-slate-500 col-span-2 md:col-span-1 relative group">
+                    <div
+                        class="glass-panel p-4 rounded-xl border-l-4 border-slate-500 col-span-2 md:col-span-1 relative group">
                         <div class="flex justify-between items-start">
                             <div>
                                 <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Fund</p>
                                 <h2 id="summary-fund" class="text-2xl font-mono font-bold text-white">0.00</h2>
                                 <span class="text-xs text-slate-500">Net Deposit</span>
                             </div>
-                            <div class="flex flex-col gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                                <button id="btn-quick-deposit" class="w-6 h-6 rounded bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white flex items-center justify-center text-xs border border-blue-500/30">+</button>
-                                <button id="btn-quick-withdraw" class="w-6 h-6 rounded bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white flex items-center justify-center text-xs border border-orange-500/30">-</button>
+                            <div
+                                class="flex flex-col gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                <button id="btn-quick-deposit"
+                                    class="w-6 h-6 rounded bg-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white flex items-center justify-center text-xs border border-blue-500/30">+</button>
+                                <button id="btn-quick-withdraw"
+                                    class="w-6 h-6 rounded bg-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white flex items-center justify-center text-xs border border-orange-500/30">-</button>
                             </div>
                         </div>
                     </div>
@@ -205,8 +277,8 @@
                         <h2 id="summary-winrate" class="text-2xl font-mono font-bold text-white">0%</h2>
                         <span id="summary-wincount" class="text-xs text-slate-500">0W - 0L</span>
                     </div>
-                    
-                    
+
+
                     <div class="glass-panel p-4 rounded-xl border-l-4 border-amber-400">
                         <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Total Trades</p>
                         <h2 id="summary-totaltrades" class="text-2xl font-mono font-bold text-white">0</h2>
@@ -223,7 +295,7 @@
                                     <span class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></span>
                                     LOG TRANSACTION
                                 </h3>
-                            
+
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
@@ -237,7 +309,8 @@
                                         <option value="WIN" class="text-green-400">TRADE WIN (+)</option>
                                         <option value="LOSS" class="text-red-400">TRADE LOSS (-)</option>
                                         <option value="DEPOSIT" class="text-blue-400 font-bold">DEPOSIT (ฝาก)</option>
-                                        <option value="WITHDRAW" class="text-orange-400 font-bold">WITHDRAW (ถอน)</option>
+                                        <option value="WITHDRAW" class="text-orange-400 font-bold">WITHDRAW (ถอน)
+                                        </option>
                                     </select>
                                 </div>
                                 <div class="md:col-span-3">
@@ -250,15 +323,20 @@
                                 </div>
                                 <div class="md:col-span-3">
                                     <label class="block text-xs text-slate-500 mb-1">AMOUNT (USD)</label>
-                                    <input type="number" id="input-amount" placeholder="0.00" min="0" step="0.01" class="w-full px-3 py-2 rounded-lg font-mono text-green-400 font-bold">
+                                    <input type="number" id="input-amount" placeholder="0.00" min="0" step="0.01"
+                                        class="w-full px-3 py-2 rounded-lg font-mono text-green-400 font-bold">
                                 </div>
                             </div>
-                            
-                            
 
-                            <button id="btn-add-trade" class="w-full mt-4 btn-press bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded-lg font-bold font-mono shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2">
+
+
+                            <button id="btn-add-trade"
+                                class="w-full mt-4 btn-press bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded-lg font-bold font-mono shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2">
                                 <span>CONFIRM RECORD</span>
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
                             </button>
                         </div>
 
@@ -267,13 +345,16 @@
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="font-mono font-bold text-lg text-slate-300">DAILY PERFORMANCE</h3>
                                 <div class="flex gap-2">
-                                    <span class="flex items-center text-xs text-slate-400"><span class="w-2 h-2 rounded-full bg-green-500 mr-1"></span> Profit</span>
-                                    <span class="flex items-center text-xs text-slate-400"><span class="w-2 h-2 rounded-full bg-red-500 mr-1"></span> Loss</span>
+                                    <span class="flex items-center text-xs text-slate-400"><span
+                                            class="w-2 h-2 rounded-full bg-green-500 mr-1"></span> Profit</span>
+                                    <span class="flex items-center text-xs text-slate-400"><span
+                                            class="w-2 h-2 rounded-full bg-red-500 mr-1"></span> Loss</span>
                                 </div>
                             </div>
                             <div class="relative w-full h-[300px]">
                                 <canvas id="pnlChart" class="absolute inset-0 w-full h-full"></canvas>
-                                <canvas id="tradesChart" class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+                                <canvas id="tradesChart"
+                                    class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
                             </div>
                         </div>
                     </div>
@@ -281,16 +362,22 @@
                     <!-- Right Panel -->
                     <div class="lg:col-span-1 flex flex-col h-full max-h-[700px]">
                         <div class="glass-panel flex-1 rounded-2xl flex flex-col overflow-hidden">
-                            <div class="p-4 border-b border-slate-700 bg-slate-900/50 flex justify-between items-center">
+                            <div
+                                class="p-4 border-b border-slate-700 bg-slate-900/50 flex justify-between items-center">
                                 <h3 class="font-mono font-bold text-slate-300">HISTORY</h3>
-                                <button id="btn-reset" class="text-xs text-red-400 hover:text-red-300 underline">Wipe All</button>
+                                <button id="btn-reset" class="text-xs text-red-400 hover:text-red-300 underline">Wipe
+                                    All</button>
                             </div>
                             <div id="history-list" class="flex-1 overflow-y-auto p-4 space-y-3">
                                 <div class="text-center text-slate-500 py-10 text-sm loading-pulse">Syncing...</div>
                             </div>
                             <div class="p-3 border-t border-slate-700 bg-slate-900/50 flex gap-2">
-                                <button id="btn-export" class="flex-1 btn-press border border-slate-600 hover:bg-slate-800 text-slate-400 text-xs py-2 rounded font-mono">EXPORT CSV</button>
-                                <button id="btn-import-trigger" class="flex-1 btn-press border border-cyan-500/30 hover:bg-cyan-900/20 text-cyan-400 text-xs py-2 rounded font-mono">IMPORT CSV</button>
+                                <button id="btn-export"
+                                    class="flex-1 btn-press border border-slate-600 hover:bg-slate-800 text-slate-400 text-xs py-2 rounded font-mono">EXPORT
+                                    CSV</button>
+                                <button id="btn-import-trigger"
+                                    class="flex-1 btn-press border border-cyan-500/30 hover:bg-cyan-900/20 text-cyan-400 text-xs py-2 rounded font-mono">IMPORT
+                                    CSV</button>
                                 <input type="file" id="file-import" accept=".csv" class="hidden">
                             </div>
                         </div>
@@ -309,6 +396,212 @@
                 </div>
             </div>
 
+            <div class="glass-panel p-6 rounded-2xl border-t-4 border-pink-500 mt-6 lg:col-span-3">
+                <div class="flex items-center gap-2 mb-6">
+                    <span class="w-2 h-2 bg-pink-400 rounded-full animate-pulse"></span>
+                    <h3 class="font-mono font-bold text-lg text-pink-400">POSITION SIZE & RISK MANAGER</h3>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-4 space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">ACCOUNT BALANCE</label>
+                                <input type="number" id="risk-balance"
+                                    class="w-full px-3 py-2 rounded-lg font-mono text-white bg-slate-900 border border-slate-700"
+                                    placeholder="Auto">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">RISK (%)</label>
+                                <input type="number" id="risk-percent" value="2" step="0.5"
+                                    class="w-full px-3 py-2 rounded-lg font-mono text-red-400 font-bold border border-red-900/50">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">ASSET & LEVERAGE</label>
+                            <div class="flex gap-2">
+                                <select id="risk-asset"
+                                    class="flex-1 px-3 py-2 rounded-lg font-mono text-white bg-slate-800 border border-slate-600">
+                                    <option value="BTC" data-size="1">BTC/USD (1 Coin)</option>
+                                    <option value="XAU" data-size="100">GOLD (100 Oz)</option>
+                                    <option value="EUR" data-size="100000">EUR/USD (100k Unit)</option>
+                                </select>
+                                <input type="number" id="risk-leverage" value="100"
+                                    class="w-20 px-2 py-2 rounded-lg font-mono text-center text-slate-300 bg-slate-800 border border-slate-600"
+                                    title="Leverage">
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 pt-2 border-t border-slate-700/50">
+                            <div
+                                class="grid grid-cols-3 gap-2 text-center text-[10px] text-slate-500 uppercase font-mono">
+                                <span>Entry Price</span>
+                                <span>Stop Loss</span>
+                                <span>Take Profit</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2">
+                                <input type="number" id="risk-entry" placeholder="Entry"
+                                    class="w-full px-2 py-2 rounded-lg font-mono text-sm text-center text-blue-400 border border-blue-900/30 bg-blue-900/10">
+                                <input type="number" id="risk-sl" placeholder="SL"
+                                    class="w-full px-2 py-2 rounded-lg font-mono text-sm text-center text-red-400 border border-red-900/30 bg-red-900/10">
+                                <input type="number" id="risk-tp" placeholder="TP"
+                                    class="w-full px-2 py-2 rounded-lg font-mono text-sm text-center text-green-400 border border-green-900/30 bg-green-900/10">
+                            </div>
+                        </div>
+
+                        <button id="btn-calc-position"
+                            class="w-full btn-press bg-pink-600 hover:bg-pink-500 text-white py-2 rounded-lg font-bold font-mono shadow-lg shadow-pink-500/20 text-sm">
+                            CALCULATE LOTS
+                        </button>
+                    </div>
+
+                    <div class="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div
+                            class="md:col-span-3 bg-slate-900/50 p-4 rounded-xl border border-pink-500/30 flex justify-between items-center relative overflow-hidden">
+                            <div class="relative z-10">
+                                <p class="text-xs text-pink-400 uppercase tracking-widest mb-1">Recommended Position</p>
+                                <div class="flex items-baseline gap-3">
+                                    <h2 id="res-lot" class="text-4xl font-mono font-bold text-white">0.00</h2>
+                                    <span class="text-sm text-slate-400 font-mono">LOTS</span>
+                                </div>
+                            </div>
+                            <div class="text-right relative z-10">
+                                <p class="text-xs text-slate-500 uppercase">Margin Required</p>
+                                <p id="res-margin" class="text-xl font-mono text-slate-300">$0.00</p>
+                            </div>
+                            <div
+                                class="absolute right-0 top-0 h-full w-32 bg-gradient-to-l from-pink-500/10 to-transparent pointer-events-none">
+                            </div>
+                        </div>
+
+                        <div
+                            class="bg-slate-800/30 p-4 rounded-xl border border-slate-700 flex flex-col justify-center">
+                            <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Risk Amount</p>
+                            <h3 id="res-risk-amt" class="text-xl font-mono font-bold text-red-400">$0.00</h3>
+                            <span class="text-[10px] text-slate-600 mt-1">Loss if SL hit</span>
+                        </div>
+
+                        <div
+                            class="bg-slate-800/30 p-4 rounded-xl border border-slate-700 flex flex-col justify-center">
+                            <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Reward Amount</p>
+                            <h3 id="res-reward-amt" class="text-xl font-mono font-bold text-green-400">$0.00</h3>
+                            <span class="text-[10px] text-slate-600 mt-1">Profit if TP hit</span>
+                        </div>
+
+                        <div
+                            class="bg-slate-800/30 p-4 rounded-xl border border-slate-700 flex flex-col justify-center">
+                            <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">R:R Ratio</p>
+                            <h3 id="res-rr" class="text-xl font-mono font-bold text-blue-400">0 : 0</h3>
+                            <span id="res-rr-eval" class="text-[10px] text-slate-600 mt-1">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: CALCULATOR -->
+            <div id="calc-panel" class="hidden flex-col gap-6 animate-fade-in pb-10">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Calculator Inputs -->
+                    <div class="glass-panel p-6 rounded-2xl border-t-4 border-purple-500 lg:col-span-1">
+                        <div class="flex items-center gap-2 mb-6">
+                            <span class="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></span>
+                            <h3 class="font-mono font-bold text-lg text-purple-400">COMPOUND INTEREST</h3>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">INITIAL INVESTMENT
+                                    (เงินต้นเริ่มต้น)</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2 text-slate-500">$</span>
+                                    <input type="number" id="calc-principal" value="1000" min="0" step="100"
+                                        class="w-full pl-8 pr-3 py-2 rounded-lg font-mono text-white">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">MONTHLY DEPOSIT
+                                    (ฝากเพิ่มรายเดือน)</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2 text-slate-500">$</span>
+                                    <input type="number" id="calc-monthly" value="100" min="0" step="50"
+                                        class="w-full pl-8 pr-3 py-2 rounded-lg font-mono text-white">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">ANNUAL RETURN RATE
+                                    (ผลตอบแทน/ปี)</label>
+                                <div class="relative">
+                                    <span class="absolute right-3 top-2 text-slate-500">%</span>
+                                    <input type="number" id="calc-rate" value="10" min="0" step="0.5"
+                                        class="w-full px-3 py-2 rounded-lg font-mono text-white">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">YEARS TO GROW (ระยะเวลา/ปี)</label>
+                                <div class="relative">
+                                    <span class="absolute right-3 top-2 text-slate-500">Y</span>
+                                    <input type="number" id="calc-years" value="5" min="1" step="1"
+                                        class="w-full px-3 py-2 rounded-lg font-mono text-white">
+                                </div>
+                            </div>
+                            <button id="btn-calculate-compound"
+                                class="w-full mt-4 btn-press bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-lg font-bold font-mono shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2">
+                                <span>CALCULATE</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 7h6m0 0v6m0-6L9 17"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Calculator Results -->
+                    <div class="glass-panel p-6 rounded-2xl lg:col-span-2 flex flex-col gap-6 justify-center">
+                        <div class="text-center mb-2">
+                            <p class="text-sm text-slate-400 uppercase tracking-widest mb-2">Total Future Value</p>
+                            <h2
+                                class="text-4xl md:text-5xl font-mono font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 neon-text break-all">
+                                $<span id="calc-result-total">0.00</span>
+                            </h2>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div
+                                class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 flex flex-col justify-center">
+                                <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Total Principal
+                                    (เงินต้นรวม)
+                                </p>
+                                <h3 class="text-2xl font-mono font-bold text-blue-400 break-all">$<span
+                                        id="calc-result-invested">0.00</span></h3>
+                            </div>
+                            <div
+                                class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 flex flex-col justify-center">
+                                <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Total Interest
+                                    (ดอกเบี้ยรวม)
+                                </p>
+                                <h3 class="text-2xl font-mono font-bold text-green-400 break-all">$<span
+                                        id="calc-result-interest">0.00</span></h3>
+                            </div>
+                        </div>
+
+                        <!-- Visual Breakdown Bar -->
+                        <div class="mt-4">
+                            <div class="w-full h-4 bg-slate-800 rounded-full overflow-hidden flex">
+                                <div id="calc-bar-principal" class="h-full bg-blue-500 transition-all duration-700"
+                                    style="width: 50%;"></div>
+                                <div id="calc-bar-interest" class="h-full bg-green-500 transition-all duration-700"
+                                    style="width: 50%;"></div>
+                            </div>
+                            <div class="flex justify-between text-xs text-slate-500 font-mono mt-2">
+                                <span>PRINCIPAL</span>
+                                <span>INTEREST</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -319,13 +612,13 @@
 
         // --- CONFIG ---
         const userFirebaseConfig = {
-          apiKey: "AIzaSyB5fy6zul5grXI2IPi8SmV_ciU_h5nD4cE",
-          authDomain: "trade-journal-d51d8.firebaseapp.com",
-          projectId: "trade-journal-d51d8",
-          storageBucket: "trade-journal-d51d8.firebasestorage.app",
-          messagingSenderId: "990372526017",
-          appId: "1:990372526017:web:4411df49e415ce1d49e140",
-          measurementId: "G-QM7JRHJ60Q"
+            apiKey: "AIzaSyB5fy6zul5grXI2IPi8SmV_ciU_h5nD4cE",
+            authDomain: "trade-journal-d51d8.firebaseapp.com",
+            projectId: "trade-journal-d51d8",
+            storageBucket: "trade-journal-d51d8.firebasestorage.app",
+            messagingSenderId: "990372526017",
+            appId: "1:990372526017:web:4411df49e415ce1d49e140",
+            measurementId: "G-QM7JRHJ60Q"
         };
         const appId = (typeof __app_id !== 'undefined') ? __app_id : 'default-app-id';
 
@@ -333,4 +626,5 @@
         const app = new TradeApp(userFirebaseConfig, appId);
     </script>
 </body>
+
 </html>
