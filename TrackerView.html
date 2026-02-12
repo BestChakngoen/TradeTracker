@@ -396,134 +396,138 @@
                 </div>
             </div>
 
-            <div class="glass-panel p-6 rounded-2xl border-t-4 border-pink-500 mt-6 lg:col-span-3">
-                <div class="flex items-center gap-2 mb-6">
-                    <span class="w-2 h-2 bg-pink-400 rounded-full animate-pulse"></span>
-                    <h3 class="font-mono font-bold text-lg text-pink-400">POSITION SIZE & RISK MANAGER</h3>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    <div class="lg:col-span-4 space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">ACCOUNT BALANCE</label>
-                                <input type="number" id="risk-balance"
-                                    class="w-full px-3 py-2 rounded-lg font-mono text-white bg-slate-900 border border-slate-700"
-                                    placeholder="Auto">
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">RISK (%)</label>
-                                <input type="number" id="risk-percent" value="2" step="0.5"
-                                    class="w-full px-3 py-2 rounded-lg font-mono text-red-400 font-bold border border-red-900/50">
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs text-slate-400 mb-1">ASSET & LEVERAGE</label>
-                            <div class="flex gap-2">
-                                <select id="risk-asset"
-                                    class="flex-1 px-3 py-2 rounded-lg font-mono text-white bg-slate-800 border border-slate-600">
-                                    <option value="BTC" data-size="1">BTC/USD (1 Coin)</option>
-                                    <option value="XAU" data-size="100">GOLD (100 Oz)</option>
-                                    <option value="EUR" data-size="100000">EUR/USD (100k Unit)</option>
-                                </select>
-                                <input type="number" id="risk-leverage" value="100"
-                                    class="w-20 px-2 py-2 rounded-lg font-mono text-center text-slate-300 bg-slate-800 border border-slate-600"
-                                    title="Leverage">
-                            </div>
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="block text-xs text-slate-400 mb-1">DIRECTION (ทิศทาง)</label>
-                            <div class="flex gap-2">
-                                <label class="flex-1 cursor-pointer group">
-                                    <input type="radio" name="risk-side" value="LONG" class="peer hidden" checked>
-                                    <div
-                                        class="py-2 text-center rounded-lg border border-slate-600 text-slate-500 bg-slate-800/50 peer-checked:bg-green-600 peer-checked:text-white peer-checked:border-green-500 peer-checked:shadow-[0_0_10px_rgba(22,163,74,0.5)] transition-all font-mono font-bold text-xs flex items-center justify-center gap-2">
-                                        <span
-                                            class="w-2 h-2 rounded-full bg-green-400 group-hover:animate-pulse"></span>
-                                        BUY / LONG
-                                    </div>
-                                </label>
-                                <label class="flex-1 cursor-pointer group">
-                                    <input type="radio" name="risk-side" value="SHORT" class="peer hidden">
-                                    <div
-                                        class="py-2 text-center rounded-lg border border-slate-600 text-slate-500 bg-slate-800/50 peer-checked:bg-red-600 peer-checked:text-white peer-checked:border-red-500 peer-checked:shadow-[0_0_10px_rgba(220,38,38,0.5)] transition-all font-mono font-bold text-xs flex items-center justify-center gap-2">
-                                        <span class="w-2 h-2 rounded-full bg-red-400 group-hover:animate-pulse"></span>
-                                        SELL / SHORT
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div class="space-y-2 pt-2 border-t border-slate-700/50">
-                            <div
-                                class="grid grid-cols-3 gap-2 text-center text-[10px] text-slate-500 uppercase font-mono">
-                                <span>Entry Price</span>
-                                <span>Stop Loss</span>
-                                <span>Take Profit</span>
-                            </div>
-                            <div class="grid grid-cols-3 gap-2">
-                                <input type="number" id="risk-entry" placeholder="Entry"
-                                    class="w-full px-2 py-2 rounded-lg font-mono text-sm text-center text-blue-400 border border-blue-900/30 bg-blue-900/10">
-                                <input type="number" id="risk-sl" placeholder="SL"
-                                    class="w-full px-2 py-2 rounded-lg font-mono text-sm text-center text-red-400 border border-red-900/30 bg-red-900/10">
-                                <input type="number" id="risk-tp" placeholder="TP"
-                                    class="w-full px-2 py-2 rounded-lg font-mono text-sm text-center text-green-400 border border-green-900/30 bg-green-900/10">
-                            </div>
-                        </div>
-
-                        <button id="btn-calc-position"
-                            class="w-full btn-press bg-pink-600 hover:bg-pink-500 text-white py-2 rounded-lg font-bold font-mono shadow-lg shadow-pink-500/20 text-sm">
-                            CALCULATE LOTS
-                        </button>
-                    </div>
-
-                    <div class="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div
-                            class="md:col-span-3 bg-slate-900/50 p-4 rounded-xl border border-pink-500/30 flex justify-between items-center relative overflow-hidden">
-                            <div class="relative z-10">
-                                <p class="text-xs text-pink-400 uppercase tracking-widest mb-1">Recommended Position</p>
-                                <div class="flex items-baseline gap-3">
-                                    <h2 id="res-lot" class="text-4xl font-mono font-bold text-white">0.00</h2>
-                                    <span class="text-sm text-slate-400 font-mono">LOTS</span>
-                                </div>
-                            </div>
-                            <div class="text-right relative z-10">
-                                <p class="text-xs text-slate-500 uppercase">Margin Required</p>
-                                <p id="res-margin" class="text-xl font-mono text-slate-300">$0.00</p>
-                            </div>
-                            <div
-                                class="absolute right-0 top-0 h-full w-32 bg-gradient-to-l from-pink-500/10 to-transparent pointer-events-none">
-                            </div>
-                        </div>
-
-                        <div
-                            class="bg-slate-800/30 p-4 rounded-xl border border-slate-700 flex flex-col justify-center">
-                            <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Risk Amount</p>
-                            <h3 id="res-risk-amt" class="text-xl font-mono font-bold text-red-400">$0.00</h3>
-                            <span class="text-[10px] text-slate-600 mt-1">Loss if SL hit</span>
-                        </div>
-
-                        <div
-                            class="bg-slate-800/30 p-4 rounded-xl border border-slate-700 flex flex-col justify-center">
-                            <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Reward Amount</p>
-                            <h3 id="res-reward-amt" class="text-xl font-mono font-bold text-green-400">$0.00</h3>
-                            <span class="text-[10px] text-slate-600 mt-1">Profit if TP hit</span>
-                        </div>
-
-                        <div
-                            class="bg-slate-800/30 p-4 rounded-xl border border-slate-700 flex flex-col justify-center">
-                            <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">R:R Ratio</p>
-                            <h3 id="res-rr" class="text-xl font-mono font-bold text-blue-400">0 : 0</h3>
-                            <span id="res-rr-eval" class="text-[10px] text-slate-600 mt-1">-</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- TAB 3: CALCULATOR -->
             <div id="calc-panel" class="hidden flex-col gap-6 animate-fade-in pb-10">
+
+                <!-- POSITION SIZE & RISK MANAGER (MOVED HERE) -->
+                <div class="glass-panel p-6 rounded-2xl border-t-4 border-pink-500">
+                    <div class="flex items-center gap-2 mb-6">
+                        <span class="w-2 h-2 bg-pink-400 rounded-full animate-pulse"></span>
+                        <h3 class="font-mono font-bold text-lg text-pink-400">POSITION SIZE & RISK MANAGER</h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <div class="lg:col-span-4 space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">ACCOUNT BALANCE</label>
+                                    <input type="number" id="risk-balance"
+                                        class="w-full px-3 py-2 rounded-lg font-mono text-white bg-slate-900 border border-slate-700"
+                                        placeholder="Auto">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">RISK (%)</label>
+                                    <input type="number" id="risk-percent" value="2" step="0.5"
+                                        class="w-full px-3 py-2 rounded-lg font-mono text-red-400 font-bold border border-red-900/50">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">ASSET & LEVERAGE</label>
+                                <div class="flex gap-2">
+                                    <select id="risk-asset"
+                                        class="flex-1 px-3 py-2 rounded-lg font-mono text-white bg-slate-800 border border-slate-600">
+                                        <option value="BTC" data-size="1">BTC/USD (1 Coin)</option>
+                                        <option value="XAU" data-size="100">GOLD (100 Oz)</option>
+                                        <option value="EUR" data-size="100000">EUR/USD (100k Unit)</option>
+                                    </select>
+                                    <input type="number" id="risk-leverage" value="100"
+                                        class="w-20 px-2 py-2 rounded-lg font-mono text-center text-slate-300 bg-slate-800 border border-slate-600"
+                                        title="Leverage">
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-xs text-slate-400 mb-1">DIRECTION (ทิศทาง)</label>
+                                <div class="flex gap-2">
+                                    <label class="flex-1 cursor-pointer group">
+                                        <input type="radio" name="risk-side" value="LONG" class="peer hidden" checked>
+                                        <div
+                                            class="py-2 text-center rounded-lg border border-slate-600 text-slate-500 bg-slate-800/50 peer-checked:bg-green-600 peer-checked:text-white peer-checked:border-green-500 peer-checked:shadow-[0_0_10px_rgba(22,163,74,0.5)] transition-all font-mono font-bold text-xs flex items-center justify-center gap-2">
+                                            <span
+                                                class="w-2 h-2 rounded-full bg-green-400 group-hover:animate-pulse"></span>
+                                            BUY / LONG
+                                        </div>
+                                    </label>
+                                    <label class="flex-1 cursor-pointer group">
+                                        <input type="radio" name="risk-side" value="SHORT" class="peer hidden">
+                                        <div
+                                            class="py-2 text-center rounded-lg border border-slate-600 text-slate-500 bg-slate-800/50 peer-checked:bg-red-600 peer-checked:text-white peer-checked:border-red-500 peer-checked:shadow-[0_0_10px_rgba(220,38,38,0.5)] transition-all font-mono font-bold text-xs flex items-center justify-center gap-2">
+                                            <span
+                                                class="w-2 h-2 rounded-full bg-red-400 group-hover:animate-pulse"></span>
+                                            SELL / SHORT
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 pt-2 border-t border-slate-700/50">
+                                <div
+                                    class="grid grid-cols-3 gap-2 text-center text-[10px] text-slate-500 uppercase font-mono">
+                                    <span>Entry Price</span>
+                                    <span>Stop Loss</span>
+                                    <span>Take Profit</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <input type="number" id="risk-entry" placeholder="Entry"
+                                        class="w-full px-2 py-2 rounded-lg font-mono text-sm text-center text-blue-400 border border-blue-900/30 bg-blue-900/10">
+                                    <input type="number" id="risk-sl" placeholder="SL"
+                                        class="w-full px-2 py-2 rounded-lg font-mono text-sm text-center text-red-400 border border-red-900/30 bg-red-900/10">
+                                    <input type="number" id="risk-tp" placeholder="TP"
+                                        class="w-full px-2 py-2 rounded-lg font-mono text-sm text-center text-green-400 border border-green-900/30 bg-green-900/10">
+                                </div>
+                            </div>
+
+                            <button id="btn-calc-position"
+                                class="w-full btn-press bg-pink-600 hover:bg-pink-500 text-white py-2 rounded-lg font-bold font-mono shadow-lg shadow-pink-500/20 text-sm">
+                                CALCULATE LOTS
+                            </button>
+                        </div>
+
+                        <div class="lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div
+                                class="md:col-span-3 bg-slate-900/50 p-4 rounded-xl border border-pink-500/30 flex justify-between items-center relative overflow-hidden">
+                                <div class="relative z-10">
+                                    <p class="text-xs text-pink-400 uppercase tracking-widest mb-1">Recommended Position
+                                    </p>
+                                    <div class="flex items-baseline gap-3">
+                                        <h2 id="res-lot" class="text-4xl font-mono font-bold text-white">0.00</h2>
+                                        <span class="text-sm text-slate-400 font-mono">LOTS</span>
+                                    </div>
+                                </div>
+                                <div class="text-right relative z-10">
+                                    <p class="text-xs text-slate-500 uppercase">Margin Required</p>
+                                    <p id="res-margin" class="text-xl font-mono text-slate-300">$0.00</p>
+                                </div>
+                                <div
+                                    class="absolute right-0 top-0 h-full w-32 bg-gradient-to-l from-pink-500/10 to-transparent pointer-events-none">
+                                </div>
+                            </div>
+
+                            <div
+                                class="bg-slate-800/30 p-4 rounded-xl border border-slate-700 flex flex-col justify-center">
+                                <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Risk Amount</p>
+                                <h3 id="res-risk-amt" class="text-xl font-mono font-bold text-red-400">$0.00</h3>
+                                <span class="text-[10px] text-slate-600 mt-1">Loss if SL hit</span>
+                            </div>
+
+                            <div
+                                class="bg-slate-800/30 p-4 rounded-xl border border-slate-700 flex flex-col justify-center">
+                                <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Reward Amount</p>
+                                <h3 id="res-reward-amt" class="text-xl font-mono font-bold text-green-400">$0.00</h3>
+                                <span class="text-[10px] text-slate-600 mt-1">Profit if TP hit</span>
+                            </div>
+
+                            <div
+                                class="bg-slate-800/30 p-4 rounded-xl border border-slate-700 flex flex-col justify-center">
+                                <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">R:R Ratio</p>
+                                <h3 id="res-rr" class="text-xl font-mono font-bold text-blue-400">0 : 0</h3>
+                                <span id="res-rr-eval" class="text-[10px] text-slate-600 mt-1">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!-- Calculator Inputs -->
                     <div class="glass-panel p-6 rounded-2xl border-t-4 border-purple-500 lg:col-span-1">
