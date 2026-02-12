@@ -34,10 +34,21 @@ export class TradeApp {
             }
         });
 
+
+        // Risk Calculator Listeners
         ['risk-balance', 'risk-percent', 'risk-leverage', 'risk-asset', 'risk-entry', 'risk-sl', 'risk-tp'].forEach(id => {
-            document.getElementById(id).oninput = () => this.calculateRisk();
-            document.getElementById(id).onchange = () => this.calculateRisk();
+            const el = document.getElementById(id);
+            if (el) {
+                el.oninput = () => this.calculateRisk();
+                el.onchange = () => this.calculateRisk();
+            }
         });
+
+        // เพิ่ม Listener สำหรับ Radio Buttons (Buy/Sell)
+        document.querySelectorAll('input[name="risk-side"]').forEach(radio => {
+            radio.onchange = () => this.calculateRisk();
+        });
+
         document.getElementById('btn-calc-position').onclick = () => this.calculateRisk();
 
         // Button Clicks
@@ -212,8 +223,6 @@ export class TradeApp {
         document.getElementById('calc-bar-interest').style.width = `${interestPercent}%`;
     }
 
-    // เพิ่มเมธอดนี้ต่อจาก calculateCompoundInterest() หรือท้ายคลาส TradeApp
-
     calculateRisk() {
         const dom = {
             bal: document.getElementById('risk-balance'),
@@ -223,6 +232,7 @@ export class TradeApp {
             entry: parseFloat(document.getElementById('risk-entry').value) || 0,
             sl: parseFloat(document.getElementById('risk-sl').value) || 0,
             tp: parseFloat(document.getElementById('risk-tp').value) || 0,
+            side: document.querySelector('input[name="risk-side"]:checked').value, // รับค่า LONG หรือ SHORT
             // Outputs
             oLot: document.getElementById('res-lot'),
             oMargin: document.getElementById('res-margin'),
@@ -232,24 +242,41 @@ export class TradeApp {
             oEval: document.getElementById('res-rr-eval')
         };
 
-        // 1. Get Balance (Manual input OR Auto from summary)
+        // 1. Get Balance
         let balance = parseFloat(dom.bal.value);
         if (isNaN(balance) || balance === 0) {
-            // ดึงจากยอด Balance ปัจจุบันถ้าไม่ได้กรอกเอง
             const currentBalText = document.getElementById('summary-balance').innerText;
             balance = parseFloat(currentBalText) || 0;
-            if (balance === 0) balance = 1000; // Default fallback
+            if (balance === 0) balance = 1000;
         }
 
         // 2. Calculate Risk Amount ($)
         const riskPct = parseFloat(dom.pct.value) || 2;
         const riskAmt = balance * (riskPct / 100);
 
-        // 3. Get Asset Contract Size
-        // BTC=1, XAU=100 (Standard), EUR=100000 (Standard)
+        // 3. Asset Config
         const contractSize = parseFloat(dom.asset.options[dom.asset.selectedIndex].dataset.size) || 1;
 
-        // 4. Calculate Distance
+        // 4. Logic & Validation based on Direction
+        let isValidSetup = true;
+        let setupError = "";
+
+        // ตรวจสอบเงื่อนไขราคาตามทิศทาง
+        if (dom.entry > 0 && dom.sl > 0) {
+            if (dom.side === 'LONG') {
+                if (dom.sl >= dom.entry) {
+                    isValidSetup = false;
+                    setupError = "Invalid Long: SL ≥ Entry";
+                }
+            } else { // SHORT
+                if (dom.sl <= dom.entry) {
+                    isValidSetup = false;
+                    setupError = "Invalid Short: SL ≤ Entry";
+                }
+            }
+        }
+
+        // คำนวณระยะห่าง (Distance) เป็น Absolute เสมอสำหรับการคำนวณ Lot
         const distSL = Math.abs(dom.entry - dom.sl);
         const distTP = Math.abs(dom.tp - dom.entry);
 
@@ -258,15 +285,14 @@ export class TradeApp {
         let margin = 0;
         let rr = 0;
 
-        if (dom.entry > 0 && distSL > 0) {
-            // Formula: Lot = RiskAmount / (Distance * ContractSize)
-            // ตัวอย่าง ทองคำ: เสีย $20, ระยะห่าง $2, Contract 100 -> 20 / (2 * 100) = 0.1 Lot
+        if (dom.entry > 0 && distSL > 0 && isValidSetup) {
+            // Formula: RiskAmt / (Distance * Contract)
             lots = riskAmt / (distSL * contractSize);
 
             // Calculate Reward
             rewardAmt = lots * contractSize * distTP;
 
-            // Calculate Margin: (Lot * Contract * Entry) / Leverage
+            // Calculate Margin
             const leverage = parseFloat(dom.lev.value) || 100;
             margin = (lots * contractSize * dom.entry) / leverage;
 
@@ -275,36 +301,53 @@ export class TradeApp {
         }
 
         // 5. Update UI
-        dom.oLot.innerText = lots > 0 ? lots.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00";
-        dom.oRisk.innerText = "$" + riskAmt.toLocaleString('en-US', { minimumFractionDigits: 2 });
-        dom.oReward.innerText = "$" + rewardAmt.toLocaleString('en-US', { minimumFractionDigits: 2 });
-        dom.oMargin.innerText = "$" + margin.toLocaleString('en-US', { minimumFractionDigits: 2 });
+        if (!isValidSetup && dom.entry > 0 && dom.sl > 0) {
+            // กรณี Setup ผิดพลาด
+            dom.oLot.innerText = "ERROR";
+            dom.oLot.classList.add('text-red-500');
+            dom.oLot.classList.remove('text-white');
 
-        if (dom.entry > 0 && dom.sl > 0 && dom.tp > 0) {
-            dom.oRR.innerText = `1 : ${rr.toFixed(2)}`;
+            dom.oEval.innerText = setupError;
+            dom.oEval.className = "text-[10px] text-red-500 mt-1 font-bold animate-pulse";
 
-            // Color coding based on RR
-            if (rr < 1) {
-                dom.oRR.className = "text-xl font-mono font-bold text-red-400";
-                dom.oEval.innerText = "Poor Risk/Reward";
-                dom.oEval.className = "text-[10px] text-red-500 mt-1";
-            } else if (rr < 2) {
-                dom.oRR.className = "text-xl font-mono font-bold text-yellow-400";
-                dom.oEval.innerText = "Moderate";
-                dom.oEval.className = "text-[10px] text-yellow-500 mt-1";
-            } else {
-                dom.oRR.className = "text-xl font-mono font-bold text-green-400";
-                dom.oEval.innerText = "Excellent!";
-                dom.oEval.className = "text-[10px] text-green-500 mt-1";
-            }
+            dom.oRisk.innerText = "$0.00";
+            dom.oReward.innerText = "$0.00";
+            dom.oMargin.innerText = "$0.00";
+            dom.oRR.innerText = "- : -";
         } else {
-            dom.oRR.innerText = "0 : 0";
-            dom.oRR.className = "text-xl font-mono font-bold text-slate-500";
-            dom.oEval.innerText = "Enter prices to calc";
-            dom.oEval.className = "text-[10px] text-slate-600 mt-1";
+            // กรณีปกติ
+            dom.oLot.classList.remove('text-red-500');
+            dom.oLot.classList.add('text-white');
+            dom.oLot.innerText = lots > 0 ? lots.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00";
+
+            dom.oRisk.innerText = "$" + riskAmt.toLocaleString('en-US', { minimumFractionDigits: 2 });
+            dom.oReward.innerText = "$" + rewardAmt.toLocaleString('en-US', { minimumFractionDigits: 2 });
+            dom.oMargin.innerText = "$" + margin.toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+            if (dom.entry > 0 && dom.sl > 0 && dom.tp > 0) {
+                dom.oRR.innerText = `1 : ${rr.toFixed(2)}`;
+
+                if (rr < 1) {
+                    dom.oRR.className = "text-xl font-mono font-bold text-red-400";
+                    dom.oEval.innerText = "Poor Risk/Reward";
+                    dom.oEval.className = "text-[10px] text-red-500 mt-1";
+                } else if (rr < 2) {
+                    dom.oRR.className = "text-xl font-mono font-bold text-yellow-400";
+                    dom.oEval.innerText = "Moderate";
+                    dom.oEval.className = "text-[10px] text-yellow-500 mt-1";
+                } else {
+                    dom.oRR.className = "text-xl font-mono font-bold text-green-400";
+                    dom.oEval.innerText = "Excellent Setup!";
+                    dom.oEval.className = "text-[10px] text-green-500 mt-1";
+                }
+            } else {
+                dom.oRR.innerText = "0 : 0";
+                dom.oRR.className = "text-xl font-mono font-bold text-slate-500";
+                dom.oEval.innerText = "Waiting for inputs...";
+                dom.oEval.className = "text-[10px] text-slate-600 mt-1";
+            }
         }
     }
-
     // --- Market & Helpers ---
 
     // Live price removed: no updatePrice method

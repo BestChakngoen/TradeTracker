@@ -433,6 +433,29 @@
                             </div>
                         </div>
 
+                        <div class="mb-4">
+                            <label class="block text-xs text-slate-400 mb-1">DIRECTION (ทิศทาง)</label>
+                            <div class="flex gap-2">
+                                <label class="flex-1 cursor-pointer group">
+                                    <input type="radio" name="risk-side" value="LONG" class="peer hidden" checked>
+                                    <div
+                                        class="py-2 text-center rounded-lg border border-slate-600 text-slate-500 bg-slate-800/50 peer-checked:bg-green-600 peer-checked:text-white peer-checked:border-green-500 peer-checked:shadow-[0_0_10px_rgba(22,163,74,0.5)] transition-all font-mono font-bold text-xs flex items-center justify-center gap-2">
+                                        <span
+                                            class="w-2 h-2 rounded-full bg-green-400 group-hover:animate-pulse"></span>
+                                        BUY / LONG
+                                    </div>
+                                </label>
+                                <label class="flex-1 cursor-pointer group">
+                                    <input type="radio" name="risk-side" value="SHORT" class="peer hidden">
+                                    <div
+                                        class="py-2 text-center rounded-lg border border-slate-600 text-slate-500 bg-slate-800/50 peer-checked:bg-red-600 peer-checked:text-white peer-checked:border-red-500 peer-checked:shadow-[0_0_10px_rgba(220,38,38,0.5)] transition-all font-mono font-bold text-xs flex items-center justify-center gap-2">
+                                        <span class="w-2 h-2 rounded-full bg-red-400 group-hover:animate-pulse"></span>
+                                        SELL / SHORT
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
                         <div class="space-y-2 pt-2 border-t border-slate-700/50">
                             <div
                                 class="grid grid-cols-3 gap-2 text-center text-[10px] text-slate-500 uppercase font-mono">
