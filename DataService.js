@@ -1,4 +1,4 @@
-    import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, updateDoc, setDoc, getDoc, runTransaction, increment } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, updateDoc, setDoc, getDoc, runTransaction, increment } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
 // --- FILE 2: DATA SERVICE (FIRESTORE & CSV) ---
 
@@ -55,7 +55,25 @@ export class DataService {
                 }
                 trades.push(data);
             });
-            trades.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // UPDATED SORTING LOGIC:
+            // 1. Sort by Date (Newest first)
+            // 2. If dates are equal, Sort by order_index (Newest/Highest first)
+            trades.sort((a, b) => {
+                const dateA = new Date(a.date).getTime();
+                const dateB = new Date(b.date).getTime();
+                
+                // Compare Date
+                if (dateB !== dateA) {
+                    return dateB - dateA;
+                }
+                
+                // Compare Index (if available) to preserve creation/CSV order
+                const indexA = a.order_index || a.id || 0;
+                const indexB = b.order_index || b.id || 0;
+                return indexB - indexA;
+            });
+
             // Also fetch meta doc once and then call callback with both. If meta missing, create it from current trades.
             const metaRef = this.getMetaDoc(uid);
             getDoc(metaRef).then(mdoc => {
@@ -155,6 +173,9 @@ export class DataService {
         const isBroker = lines[0].includes('closing_time_utc');
         const parsedTrades = [];
 
+        // Base timestamp for this import batch
+        const baseTime = Date.now();
+
         for(let i=1; i<lines.length; i++) {
             const line = lines[i].trim();
             if(!line) continue;
@@ -186,8 +207,11 @@ export class DataService {
             }
 
             if(date && !isNaN(amount)) {
+                // ADDED: order_index to preserve CSV row order
+                // Using baseTime + i ensures strict sequential ordering for this batch
                 parsedTrades.push({
-                    id: Date.now() + i,
+                    id: baseTime + i,
+                    order_index: baseTime + i, // Store index for sorting
                     date, asset, type, amount,
                     timestamp: new Date().toISOString()
                 });

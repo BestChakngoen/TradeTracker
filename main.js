@@ -150,8 +150,10 @@ export class TradeApp {
         amount = Math.abs(amount);
         if (type === 'LOSS' || type === 'WITHDRAW') amount = -amount;
 
+        const ts = Date.now();
         const trade = {
-            id: Date.now(),
+            id: ts,
+            order_index: ts, // ADDED: Index for sorting consistency
             date, asset, type, amount,
             timestamp: new Date().toISOString()
         };
