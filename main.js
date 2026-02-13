@@ -15,6 +15,11 @@ export class TradeApp {
         this.initListeners();
     }
 
+    // Helper: Get current date as YYYY-MM-DD string in Thai Time (UTC+7)
+    getThaiDateString() {
+        return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    }
+
     initListeners() {
         // Auth Events
         this.auth.onStateChange((user) => {
@@ -61,6 +66,11 @@ export class TradeApp {
         document.getElementById('btn-import-trigger').onclick = () => document.getElementById('file-import').click();
         document.getElementById('file-import').onchange = (e) => this.handleImport(e);
 
+        // Date Manual Reset Button (New Feature) - Adjusted for Thai Time
+        document.getElementById('btn-set-today').onclick = () => {
+            this.ui.dom.inputs.date.value = this.getThaiDateString();
+        };
+
         // Tabs
         document.getElementById('tab-journal').onclick = () => this.ui.switchTab('journal');
         document.getElementById('tab-market').onclick = () => {
@@ -105,8 +115,8 @@ export class TradeApp {
             container.appendChild(b);
         });
 
-        // Initial UI
-        document.getElementById('input-date').valueAsDate = new Date();
+        // Initial UI - Adjusted for Thai Time
+        document.getElementById('input-date').value = this.getThaiDateString();
         this.updateTHB();
     }
 
@@ -148,6 +158,9 @@ export class TradeApp {
 
         await this.data.addTrade(this.auth.currentUser.uid, trade);
         dom.amount.value = '';
+        
+        // Auto-Update Date to Today (Thai Time) after successful record
+        dom.date.value = this.getThaiDateString(); 
     }
 
     async handleDelete(id) {

@@ -300,7 +300,10 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                                 <div class="md:col-span-3">
-                                    <label class="block text-xs text-slate-500 mb-1">DATE</label>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <label class="block text-xs text-slate-500">DATE</label>
+                                        <button id="btn-set-today" class="text-[10px] text-cyan-400 hover:text-cyan-300 underline cursor-pointer font-mono font-bold tracking-wider">TODAY</button>
+                                    </div>
                                     <input type="date" id="input-date" class="w-full px-3 py-2 rounded-lg font-mono">
                                 </div>
                                 <div class="md:col-span-3">
