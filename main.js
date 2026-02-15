@@ -12,6 +12,7 @@ export class TradeApp {
         this.ui = new UIManager();
 
         this.trades = [];
+        this.notes = { title: '', items: [] }; // Local state for notes
         this.initListeners();
     }
 
@@ -26,6 +27,8 @@ export class TradeApp {
             if (user) {
                 this.ui.showLogin(false);
                 document.getElementById('user-display-name').innerText = `// ${user.email}`;
+                
+                // 1. Subscribe to Trades
                 this.data.subscribeTrades(user.uid, (data, meta) => {
                     this.trades = data;
                     this.ui.renderTradeList(data, (id) => this.handleDelete(id));
@@ -33,6 +36,14 @@ export class TradeApp {
                     console.log('subscribeTrades meta:', meta);
                     if (meta) this.ui.updateCloudStats(meta);
                 }, (err) => console.error(err));
+
+                // 2. Subscribe to Notes (Learning Log)
+                this.data.subscribeNotes(user.uid, (notesData) => {
+                    // Update local state and UI
+                    this.notes = notesData || { title: 'My Trading Rules', items: [] };
+                    this.ui.renderNotes(this.notes, (index) => this.handleDeleteNoteItem(index));
+                });
+
                 this.startMarketLoops();
             } else {
                 this.ui.showLogin(true);
@@ -65,6 +76,13 @@ export class TradeApp {
         document.getElementById('btn-export').onclick = () => this.handleExport();
         document.getElementById('btn-import-trigger').onclick = () => document.getElementById('file-import').click();
         document.getElementById('file-import').onchange = (e) => this.handleImport(e);
+
+        // --- NEW: NOTE LISTENERS ---
+        document.getElementById('btn-add-note').onclick = () => this.handleAddNoteItem();
+        document.getElementById('btn-save-note').onclick = () => this.handleSaveNotes();
+        document.getElementById('note-input').onkeypress = (e) => {
+            if(e.key === 'Enter') this.handleAddNoteItem();
+        };
 
         // Date Manual Reset Button (New Feature) - Adjusted for Thai Time
         document.getElementById('btn-set-today').onclick = () => {
@@ -134,6 +152,55 @@ export class TradeApp {
             } else {
                 this.ui.showAuthError(false);
             }
+        }
+    }
+
+    // --- NEW: NOTE HANDLERS ---
+    handleAddNoteItem() {
+        const input = document.getElementById('note-input');
+        const text = input.value.trim();
+        if(!text) return;
+        
+        if(!this.notes.items) this.notes.items = [];
+        this.notes.items.push(text);
+        
+        // Optimistic UI Update
+        this.ui.renderNotes(this.notes, (i) => this.handleDeleteNoteItem(i));
+        input.value = '';
+        input.focus();
+    }
+
+    handleDeleteNoteItem(index) {
+        if(!this.notes.items) return;
+        this.notes.items.splice(index, 1);
+        this.ui.renderNotes(this.notes, (i) => this.handleDeleteNoteItem(i));
+    }
+
+    async handleSaveNotes() {
+        if (!this.auth.currentUser) return;
+        const btn = document.getElementById('btn-save-note');
+        const originalText = btn.innerHTML;
+        
+        btn.innerText = 'SAVING...';
+        btn.disabled = true;
+
+        // Get current title from input
+        this.notes.title = document.getElementById('note-title').value;
+
+        try {
+            await this.data.saveNotes(this.auth.currentUser.uid, this.notes);
+            btn.innerText = 'SAVED!';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 1500);
+        } catch(e) {
+            console.error(e);
+            btn.innerText = 'ERROR';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 1500);
         }
     }
 

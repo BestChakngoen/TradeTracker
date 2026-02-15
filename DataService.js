@@ -30,6 +30,7 @@ export class DataService {
         this.useCustomConfig = !!config.apiKey;
         this.appId = appId;
         this.unsubscribe = null;
+        this.unsubscribeNotes = null;
     }
 
     getCollectionPath(uid) {
@@ -40,6 +41,13 @@ export class DataService {
     getMetaDoc(uid) {
         if (this.useCustomConfig) return doc(this.db, 'users', uid, 'meta', 'summary');
         return doc(this.db, 'artifacts', this.appId, 'users', uid, 'meta', 'summary');
+    }
+
+    // --- NEW: LEARNING LOG PATH ---
+    getNotesDoc(uid) {
+        // Store notes in a separate document under 'data' collection (or distinct path)
+        if (this.useCustomConfig) return doc(this.db, 'users', uid, 'data', 'learningLog');
+        return doc(this.db, 'artifacts', this.appId, 'users', uid, 'data', 'learningLog');
     }
 
     subscribeTrades(uid, callback, errorCallback) {
@@ -100,6 +108,28 @@ export class DataService {
         }, errorCallback);
         // keep reference to unsubscribe both if needed
         this.unsubscribe = () => { tradesUnsub(); };
+    }
+
+    // --- NEW: Subscribe to Notes ---
+    subscribeNotes(uid, callback) {
+        if (this.unsubscribeNotes) this.unsubscribeNotes();
+        const docRef = this.getNotesDoc(uid);
+        
+        this.unsubscribeNotes = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                callback(docSnap.data());
+            } else {
+                // Return default empty structure if new user
+                callback({ title: 'My Trading Rules', items: [] });
+            }
+        });
+    }
+
+    // --- NEW: Save Notes ---
+    async saveNotes(uid, notesData) {
+        const docRef = this.getNotesDoc(uid);
+        // notesData expected structure: { title: string, items: array of strings }
+        await setDoc(docRef, { ...notesData, lastUpdated: new Date().toISOString() }, { merge: true });
     }
 
     async addTrade(uid, trade) {
@@ -181,10 +211,30 @@ export class DataService {
             if(!line) continue;
             const cols = line.split(',');
             let date, asset, amount, type = 'WIN';
+            let timestampForSorting = 0; // Use for sorting
 
             if(isBroker) {
                 if(!cols[2] || !cols[13]) continue;
-                date = cols[2].split('T')[0];
+                
+                // --- Updated: UTC to Thai Time Conversion ---
+                try {
+                    let utcStr = cols[2];
+                    // If no timezone indicator, assume UTC ('Z')
+                    if (!utcStr.endsWith('Z') && !utcStr.includes('+')) {
+                        utcStr += 'Z';
+                    }
+                    const dt = new Date(utcStr);
+                    // Convert to Thai Date string (YYYY-MM-DD)
+                    // using 'en-CA' gives YYYY-MM-DD format
+                    date = dt.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+                    // Use actual milliseconds for sorting
+                    timestampForSorting = dt.getTime(); 
+                } catch (e) {
+                    console.warn('Failed to parse UTC date, falling back to raw string', e);
+                    date = cols[2].split('T')[0];
+                    timestampForSorting = new Date(date).getTime();
+                }
+
                 let rawType = cols[3];
                 let rawProfit = parseFloat(cols[13]);
                 
@@ -204,19 +254,29 @@ export class DataService {
                 asset = cols[1];
                 type = cols[2] || (parseFloat(cols[3]) >= 0 ? 'WIN' : 'LOSS');
                 amount = parseFloat(cols[3]);
+                // For standard format, assume date string is sufficient, but try to parse if possible
+                const d = new Date(date);
+                timestampForSorting = !isNaN(d.getTime()) ? d.getTime() : (baseTime + i);
             }
 
             if(date && !isNaN(amount)) {
-                // ADDED: order_index to preserve CSV row order
-                // Using baseTime + i ensures strict sequential ordering for this batch
+                // ADDED: order_index using actual timestamp if available to preserve correct chronological order
+                // If standard CSV (no time), fall back to row index logic
+                const orderIndex = (timestampForSorting > 0) ? timestampForSorting : (baseTime + i);
+
                 parsedTrades.push({
                     id: baseTime + i,
-                    order_index: baseTime + i, // Store index for sorting
+                    order_index: orderIndex, // Store index for sorting based on real time
                     date, asset, type, amount,
                     timestamp: new Date().toISOString()
                 });
             }
         }
+        
+        // Sort parsed trades by order_index to ensure correct sequence from CSV
+        // (Assuming CSV is ordered oldest to newest or follows a specific sequence we want to preserve via index)
+        parsedTrades.sort((a, b) => a.order_index - b.order_index);
+
         return parsedTrades;
     }
 }

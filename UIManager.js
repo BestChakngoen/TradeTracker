@@ -21,12 +21,48 @@ export class UIManager {
             displays: {
                 thb: document.getElementById('thb-rate')
             },
-            list: document.getElementById('history-list')
+            list: document.getElementById('history-list'),
+            // NEW: Notes Elements
+            notes: {
+                title: document.getElementById('note-title'),
+                list: document.getElementById('note-list'),
+                input: document.getElementById('note-input'),
+                btnAdd: document.getElementById('btn-add-note'),
+                btnSave: document.getElementById('btn-save-note')
+            },
+            // NEW: Chart Navigation
+            chartControls: {
+                prev: document.getElementById('chart-prev'),
+                next: document.getElementById('chart-next')
+            },
+            // NEW: History Tabs
+            historyTabs: {
+                trades: document.getElementById('hist-tab-trades'),
+                transfers: document.getElementById('hist-tab-transfers')
+            }
         };
         this.chart = null;
         this.tradesChart = null;
+        this.periodStatsEl = null; // Element to show period summary
+
+        // NEW: Chart State
+        this.chartState = {
+            pageIndex: 0, // 0 = Latest Page, 1 = Previous Page, ...
+            limit: 7, // Show 7 days per page
+            data: null
+        };
+
+        // NEW: History State
+        this.historyState = {
+            filter: 'TRADES', // 'TRADES' | 'TRANSFERS'
+            data: [],
+            onDelete: null
+        };
+
         this.initChart();
         this.initTradesChart();
+        this.initChartControls();
+        this.initHistoryTabs();
     }
 
     initChart() {
@@ -87,13 +123,26 @@ export class UIManager {
                     datalabels: {
                         anchor: 'end',
                         align: 'top',
+                        textAlign: 'center', // Center text for multi-line labels
                         font: { size: 12, weight: 'bold', family: 'Rajdhani' },
                         formatter: function (value, context) {
                             if (value === 0 || value === null) return '';
                             if (context.dataset.label.includes('Orders')) {
                                 return value + '';
                             }
-                            return value.toFixed(2);
+                            
+                            // UPDATED: Show percentage on top, amount below
+                            let amountLabel = value.toFixed(2);
+                            const percentages = context.dataset.customPercentages;
+                            if (percentages && percentages[context.dataIndex] !== undefined) {
+                                const pct = percentages[context.dataIndex];
+                                // Add percentage line if it's not 0 or effectively 0
+                                if (Math.abs(pct) > 0.001) {
+                                    // Format: (Percentage)\nAmount
+                                    return `(${pct > 0 ? '+' : ''}${pct.toFixed(1)}%)\n${amountLabel}`;
+                                }
+                            }
+                            return amountLabel;
                         }
                     },
                     tooltip: {
@@ -104,7 +153,14 @@ export class UIManager {
                                 if (label.includes('Orders')) {
                                     return label + ': ' + value + ' orders';
                                 }
-                                return label + ': ' + value.toFixed(2);
+                                // Add percent to tooltip as well
+                                let tooltipLabel = label + ': ' + value.toFixed(2);
+                                const percentages = context.dataset.customPercentages;
+                                if (percentages && percentages[context.dataIndex] !== undefined) {
+                                    const pct = percentages[context.dataIndex];
+                                    tooltipLabel += ` (${pct > 0 ? '+' : ''}${pct.toFixed(2)}%)`;
+                                }
+                                return tooltipLabel;
                             }
                         }
                     }
@@ -136,6 +192,88 @@ export class UIManager {
         // Trades chart no longer needed - data is now on main pnl chart
         // This method kept for backward compatibility but does nothing
         return;
+    }
+
+    // NEW: Chart Navigation Controls
+    initChartControls() {
+        // Find container to inject summary stats
+        if (this.dom.chartControls.next && this.dom.chartControls.next.parentNode) {
+            const btnContainer = this.dom.chartControls.next.parentNode;
+            
+            // Create stats element if not exists
+            this.periodStatsEl = document.createElement('div');
+            this.periodStatsEl.className = 'ml-3 text-xs font-mono font-bold flex items-center gap-2 px-3 py-1 bg-slate-800/50 rounded-lg border border-slate-700/50';
+            this.periodStatsEl.innerHTML = '<span class="text-slate-500">PERIOD:</span> <span class="text-slate-300">...</span>';
+            
+            // Insert after buttons
+            btnContainer.parentNode.insertBefore(this.periodStatsEl, btnContainer.nextSibling);
+            // If insert failed (layout diff), just append to parent
+             if (!this.periodStatsEl.parentNode) btnContainer.parentNode.appendChild(this.periodStatsEl);
+        }
+
+        if(this.dom.chartControls.prev) {
+            // Click Prev -> Go to Older Page (Increase page index)
+            this.dom.chartControls.prev.onclick = () => this.shiftChart(1);
+        }
+        if(this.dom.chartControls.next) {
+            // Click Next -> Go to Newer Page (Decrease page index)
+            this.dom.chartControls.next.onclick = () => this.shiftChart(-1);
+        }
+    }
+
+    shiftChart(delta) {
+        if (!this.chartState.data) return;
+        
+        const totalLen = this.chartState.data.labels.length;
+        const totalPages = Math.ceil(totalLen / this.chartState.limit);
+        
+        let newPageIndex = this.chartState.pageIndex + delta;
+
+        // Clamp Lower Bound (Latest Page = 0)
+        if (newPageIndex < 0) newPageIndex = 0;
+        
+        // Clamp Upper Bound (Oldest Page = totalPages - 1)
+        if (newPageIndex >= totalPages) newPageIndex = totalPages - 1;
+
+        if (newPageIndex !== this.chartState.pageIndex) {
+            this.chartState.pageIndex = newPageIndex;
+            this.renderChart();
+        }
+    }
+
+    // NEW: Init History Tabs
+    initHistoryTabs() {
+        if(this.dom.historyTabs.trades) {
+            this.dom.historyTabs.trades.onclick = () => this.setHistoryFilter('TRADES');
+        }
+        if(this.dom.historyTabs.transfers) {
+            this.dom.historyTabs.transfers.onclick = () => this.setHistoryFilter('TRANSFERS');
+        }
+    }
+
+    setHistoryFilter(filter) {
+        this.historyState.filter = filter;
+        
+        // Update UI Tabs
+        const t = this.dom.historyTabs.trades;
+        const f = this.dom.historyTabs.transfers;
+        const activeClasses = ['bg-slate-700', 'text-cyan-400', 'shadow-sm'];
+        const inactiveClasses = ['text-slate-500', 'hover:text-slate-300'];
+
+        if (filter === 'TRADES') {
+            t.classList.add(...activeClasses);
+            t.classList.remove(...inactiveClasses);
+            f.classList.remove(...activeClasses);
+            f.classList.add(...inactiveClasses);
+        } else {
+            f.classList.add(...activeClasses);
+            f.classList.remove(...inactiveClasses);
+            t.classList.remove(...activeClasses);
+            t.classList.add(...inactiveClasses);
+        }
+
+        // Re-render list
+        this.renderInternalHistoryList();
     }
 
     showLogin(show) {
@@ -176,18 +314,34 @@ export class UIManager {
         }
     }
 
-
+    // UPDATED: Now acts as a data setter and triggers internal render
     renderTradeList(trades, onDelete) {
+        this.historyState.data = trades;
+        this.historyState.onDelete = onDelete;
+        this.renderInternalHistoryList();
+    }
+
+    // NEW: Internal render with filtering
+    renderInternalHistoryList() {
         this.dom.list.innerHTML = '';
-        if (trades.length === 0) {
-            this.dom.list.innerHTML = '<div class="text-center text-slate-500 py-10 text-sm">No data found.</div>';
+        const { data, filter, onDelete } = this.historyState;
+
+        // Filter data based on active tab
+        const filteredTrades = data.filter(t => {
+            const type = t.type || (t.amount >= 0 ? 'WIN' : 'LOSS');
+            if (filter === 'TRADES') {
+                return type === 'WIN' || type === 'LOSS';
+            } else {
+                return type === 'DEPOSIT' || type === 'WITHDRAW';
+            }
+        });
+
+        if (filteredTrades.length === 0) {
+            this.dom.list.innerHTML = '<div class="text-center text-slate-500 py-10 text-sm">No data found in this category.</div>';
             return;
         }
 
-        // REMOVED LOCAL SORTING
-        // We now rely on DataService to provide the correctly sorted list
-        // based on Date and Order Index.
-        trades.forEach(t => {
+        filteredTrades.forEach(t => {
             let borderClass = 'border-green-500', textClass = 'text-green-400', label = 'WIN';
             let type = t.type || (t.amount >= 0 ? 'WIN' : 'LOSS'); // Backward compat
             // Ensure date is a valid string
@@ -208,7 +362,7 @@ export class UIManager {
                     <div class="text-xs ${textClass} font-bold">${label}</div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <span class="font-mono font-bold text-lg ${textClass}">${t.amount > 0 ? '+' : ''}${t.amount.toFixed(2)}</span>
+                    <span class="font-mono font-bold text-lg ${textClass}">${t.amount > 0 ? '+' : ''}${Math.abs(t.amount).toFixed(2)}</span>
                     <button class="delete-btn opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 transition" data-id="${t.firestoreId}">✕</button>
                 </div>`;
 
@@ -217,13 +371,43 @@ export class UIManager {
         });
     }
 
+    // --- NEW: RENDER NOTES ---
+    renderNotes(data, onDeleteItem) {
+        const { title, list, input } = this.dom.notes;
+        
+        // Update Title if different (avoid cursor jump if user is typing, handled by event listener usually, 
+        // but here we just set it if it's a fresh load or empty)
+        if (data.title !== undefined && document.activeElement !== title) {
+            title.value = data.title;
+        }
+
+        // Render List
+        list.innerHTML = '';
+        if (data.items && data.items.length > 0) {
+            data.items.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start gap-2 group';
+                li.innerHTML = `
+                    <span class="text-amber-500 mt-1.5">•</span>
+                    <span class="flex-1 text-slate-300 text-sm leading-relaxed font-mono">${item}</span>
+                    <button class="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 transition px-2" data-index="${index}">✕</button>
+                `;
+                li.querySelector('button').onclick = () => onDeleteItem(index);
+                list.appendChild(li);
+            });
+        } else {
+            list.innerHTML = '<li class="text-slate-600 text-xs italic">No items yet. Add one below.</li>';
+        }
+    }
+
     updateStats(trades) {
         try {
             let net = 0, dep = 0, wd = 0, wins = 0, losses = 0, best = -Infinity, worst = Infinity;
-            const daily = {};
+            const dailyPnL = {}; // Store PnL per day
+            const dailyFlow = {}; // Store Deposits/Withdrawals per day (for running balance)
             const counts = {};
 
-            // Process trades and build daily/counts maps
+            // Process trades to build daily maps and total stats
             for (let i = 0; i < trades.length; i++) {
                 const t = trades[i];
 
@@ -242,25 +426,33 @@ export class UIManager {
                 const type = t.type || (t.amount >= 0 ? 'WIN' : 'LOSS');
                 const amount = Number(t.amount) || 0;
 
-                if (type === 'DEPOSIT') dep += amount;
-                else if (type === 'WITHDRAW') wd += Math.abs(amount);
-                else {
+                if (type === 'DEPOSIT') {
+                    dep += amount;
+                    dailyFlow[dateStr] = (dailyFlow[dateStr] || 0) + amount;
+                } else if (type === 'WITHDRAW') {
+                    wd += Math.abs(amount);
+                    // Withdraw amount is negative in data, so adding it reduces flow
+                    dailyFlow[dateStr] = (dailyFlow[dateStr] || 0) + amount;
+                } else {
                     net += amount;
                     if (amount > 0) wins++; else losses++;
-                    daily[dateStr] = (daily[dateStr] || 0) + amount;
+                    dailyPnL[dateStr] = (dailyPnL[dateStr] || 0) + amount;
                     counts[dateStr] = (counts[dateStr] || 0) + 1;
                 }
             }
 
-            const fund = dep - wd;
-            const roi = fund > 0 ? (net / fund) * 100 : 0;
-
-            for (const v of Object.values(daily)) {
+            // Calculate Best/Worst days
+            for (const v of Object.values(dailyPnL)) {
                 if (v > best) best = v;
                 if (v < worst) worst = v;
             }
             if (best === -Infinity) best = 0;
             if (worst === Infinity || worst > 0) worst = 0;
+
+            const fund = dep - wd;
+            
+            // --- RESTORED ROI CALCULATION ---
+            const roi = fund > 0 ? (net / fund) * 100 : 0;
 
             // DOM Updates
             document.getElementById('summary-balance').innerText = (fund + net).toFixed(2);
@@ -276,44 +468,61 @@ export class UIManager {
             document.getElementById('summary-winrate').innerText = (wins + losses > 0 ? ((wins / (wins + losses)) * 100).toFixed(1) : 0) + '%';
             document.getElementById('summary-wincount').innerText = `${wins}W - ${losses}L`;
 
-            // Build chart labels and data arrays - ensure all are primitives (strings/numbers)
-            const dateLabels = [];
-            const pnlData = [];
-            const tradesData = [];
+            // --- CHART DATA PREPARATION ---
+            // Get all unique dates involved (Trades or Deposits)
+            const allDates = new Set([...Object.keys(dailyPnL), ...Object.keys(dailyFlow)]);
+            // Filter valid dates and Sort Chronologically (Oldest -> Newest)
+            const sortedDates = Array.from(allDates)
+                .filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d))
+                .sort((a, b) => new Date(a) - new Date(b));
 
-            Object.keys(daily).forEach(key => {
-                // Only include valid date strings
-                if (typeof key === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(key)) {
-                    dateLabels.push(key);
-                    pnlData.push(Number(daily[key]) || 0);
-                    tradesData.push(Number(counts[key]) || 0);
+            const sortedLabels = [];
+            const sortedPnl = [];
+            const sortedTrades = [];
+            const sortedPercentages = [];
+            const sortedBalances = []; // Store daily basis for summary calc
+
+            let runningBalance = 0;
+
+            // Iterate chronologically to maintain correct running balance
+            sortedDates.forEach(date => {
+                const dayPnL = dailyPnL[date] || 0;
+                const dayFlow = dailyFlow[date] || 0; // Net Deposit/Withdraw for this day
+                const dayCount = counts[date] || 0;
+
+                // Basis for ROI = Balance at start of trading day + Inflows of that day
+                // (Assuming you trade with money you have or just deposited)
+                const dailyBasis = runningBalance + dayFlow;
+                
+                let pct = 0;
+                if (Math.abs(dailyBasis) > 0.01) {
+                    pct = (dayPnL / dailyBasis) * 100;
+                }
+
+                // Update Running Balance for the NEXT day
+                runningBalance += dayFlow + dayPnL;
+
+                // Only show bars for days that actually have trading activity (PnL)
+                // This keeps the chart focused on performance, but % is now accurate based on history
+                if (dailyPnL[date] !== undefined) {
+                    sortedLabels.push(date);
+                    sortedPnl.push(dayPnL);
+                    sortedTrades.push(dayCount);
+                    sortedPercentages.push(pct);
+                    sortedBalances.push(dailyBasis); // Keep track of balance for period summary
                 }
             });
 
-            // Sort by date
-            const indices = dateLabels.map((d, i) => ({ d, i }))
-                .sort((a, b) => new Date(a.d) - new Date(b.d))
-                .map(x => x.i);
-
-            const sortedLabels = indices.map(i => dateLabels[i]);
-            const sortedPnl = indices.map(i => pnlData[i]);
-            const sortedTrades = indices.map(i => tradesData[i]);
-
-            // Update PnL chart with clean data
-            if (this.chart && this.chart.data) {
-                this.chart.data.labels = sortedLabels;
-                if (this.chart.data.datasets) {
-                    // Update P&L data (dataset 0)
-                    if (this.chart.data.datasets[0]) {
-                        this.chart.data.datasets[0].data = sortedPnl;
-                    }
-                    // Update Trades count data (dataset 1)
-                    if (this.chart.data.datasets[1]) {
-                        this.chart.data.datasets[1].data = sortedTrades;
-                    }
-                }
-                this.chart.update();
-            }
+            // Store Data and Render
+            this.chartState.data = {
+                labels: sortedLabels,
+                pnl: sortedPnl,
+                trades: sortedTrades,
+                percentages: sortedPercentages,
+                balances: sortedBalances
+            };
+            this.chartState.pageIndex = 0; // Reset to latest
+            this.renderChart();
 
             // Total trades
             const totalTrades = wins + losses;
@@ -321,6 +530,74 @@ export class UIManager {
             if (totalEl) totalEl.innerText = totalTrades;
         } catch (e) {
             console.error('Error in updateStats:', e);
+        }
+    }
+
+    // NEW: Render Chart based on Slice (Aligned to Oldest Data)
+    renderChart() {
+        if (!this.chart || !this.chartState.data) return;
+
+        const { labels, pnl, trades, percentages, balances } = this.chartState.data;
+        const totalLen = labels.length;
+        const limit = this.chartState.limit;
+        const totalPages = Math.ceil(totalLen / limit);
+        
+        // Calculate Slice indices for Pagination
+        const chunkIndex = totalPages - 1 - this.chartState.pageIndex;
+        
+        let start = chunkIndex * limit;
+        let end = Math.min(totalLen, start + limit);
+
+        // Safety clamp
+        if (start < 0) start = 0;
+        if (end < start) end = start;
+        
+        const slicedLabels = labels.slice(start, end);
+        const slicedPnl = pnl.slice(start, end);
+        const slicedTrades = trades.slice(start, end);
+        const slicedPercentages = percentages.slice(start, end);
+        const slicedBalances = balances ? balances.slice(start, end) : [];
+
+        // --- CALCULATE PERIOD SUMMARY ---
+        if (this.periodStatsEl && slicedPnl.length > 0) {
+            // Total PnL for this slice
+            const totalSlicePnL = slicedPnl.reduce((a, b) => a + b, 0);
+            
+            // Starting balance is the balance of the FIRST day in this slice
+            const startBalance = slicedBalances.length > 0 ? slicedBalances[0] : 0;
+            
+            let periodRoi = 0;
+            if (Math.abs(startBalance) > 0.01) {
+                periodRoi = (totalSlicePnL / startBalance) * 100;
+            }
+
+            const colorClass = totalSlicePnL >= 0 ? 'text-green-400' : 'text-red-400';
+            const sign = totalSlicePnL >= 0 ? '+' : '';
+            
+            this.periodStatsEl.innerHTML = `<span class="text-slate-500 hidden md:inline">SUMMARY:</span> <span class="${colorClass}">${sign}${periodRoi.toFixed(2)}% (${sign}${totalSlicePnL.toFixed(2)})</span>`;
+        } else if (this.periodStatsEl) {
+            this.periodStatsEl.innerHTML = '<span class="text-slate-500">NO DATA</span>';
+        }
+
+        // Update Chart
+        this.chart.data.labels = slicedLabels;
+        this.chart.data.datasets[0].data = slicedPnl;
+        this.chart.data.datasets[0].customPercentages = slicedPercentages;
+        this.chart.data.datasets[1].data = slicedTrades;
+        this.chart.update();
+
+        // Update Buttons
+        const isLatestPage = (this.chartState.pageIndex <= 0);
+        const isOldestPage = (this.chartState.pageIndex >= totalPages - 1);
+        
+        if (this.dom.chartControls.next) {
+            this.dom.chartControls.next.disabled = isLatestPage;
+            this.dom.chartControls.next.style.opacity = isLatestPage ? '0.3' : '1';
+        }
+        
+        if (this.dom.chartControls.prev) {
+            this.dom.chartControls.prev.disabled = isOldestPage;
+            this.dom.chartControls.prev.style.opacity = isOldestPage ? '0.3' : '1';
         }
     }
 
