@@ -97,6 +97,9 @@ export class TradeApp {
         };
 
         document.getElementById('tab-calc').onclick = () => this.ui.switchTab('calc');
+        // ADDED: News Tab Handler
+        document.getElementById('tab-news').onclick = () => this.ui.switchTab('news');
+
         document.getElementById('btn-calculate-compound').onclick = () => this.calculateCompoundInterest();
         this.calculateCompoundInterest(); // สั่งรันครั้งแรกเมื่อโหลดแอปเพื่อตั้งค่า Default
 

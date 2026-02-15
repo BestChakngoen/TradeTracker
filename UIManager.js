@@ -10,7 +10,11 @@ export class UIManager {
             loginStatus: document.getElementById('login-status'),
             panels: {
                 journal: document.getElementById('journal-panel'),
-                market: document.getElementById('market-panel')
+                market: document.getElementById('market-panel'),
+                // Added calc panel to dom tracking
+                calc: document.getElementById('calc-panel'), 
+                // ADDED: News Panel
+                news: document.getElementById('news-panel')
             },
             inputs: {
                 date: document.getElementById('input-date'),
@@ -623,19 +627,21 @@ export class UIManager {
 
 
     switchTab(tabName) {
-        ['journal', 'market', 'calc'].forEach(name => {
+        ['journal', 'market', 'calc', 'news'].forEach(name => {
             const panel = document.getElementById(`${name}-panel`);
             const tab = document.getElementById(`tab-${name}`);
             if (!panel || !tab) return;
 
             if (name === tabName) {
                 panel.classList.remove('hidden');
-                if (name === 'journal' || name === 'calc') panel.classList.add('flex');
+                // Added check for news panel display mode
+                if (name === 'journal' || name === 'calc' || name === 'news') panel.classList.add('flex');
                 tab.classList.add('nav-active', 'text-cyan-400');
                 tab.classList.remove('text-slate-500');
             } else {
                 panel.classList.add('hidden');
-                if (name === 'journal' || name === 'calc') panel.classList.remove('flex');
+                // Added check for news panel display mode removal
+                if (name === 'journal' || name === 'calc' || name === 'news') panel.classList.remove('flex');
                 tab.classList.remove('nav-active', 'text-cyan-400');
                 tab.classList.add('text-slate-500');
             }
