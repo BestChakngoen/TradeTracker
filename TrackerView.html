@@ -11,7 +11,15 @@
         href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&family=Rajdhani:wght@500;700&display=swap"
         rel="stylesheet">
 
-    <!-- Tailwind CSS -->
+    <!-- CSS Loading Strategy: 
+         1. Try to load local built CSS (Preferred for production/speed)
+         2. Keep CDN as fallback for quick prototyping without build step
+    -->
+    
+    <!-- Option A: Use Built CSS (Uncomment this line if you ran 'npm run build') -->
+    <!-- <link rel="stylesheet" href="dist/style.css"> -->
+
+    <!-- Option B: Use Tailwind CDN (Slower, but works instantly without setup) -->
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Chart.js -->
@@ -20,7 +28,7 @@
     <!-- Chart.js Data Labels Plugin -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
-    <!-- Tailwind Config -->
+    <!-- Tailwind Config for CDN mode -->
     <script>
         tailwind.config = {
             theme: {
@@ -51,6 +59,8 @@
         }
     </script>
 
+    <!-- Custom Styles -->
+    <!-- หมายเหตุ: หากคุณใช้ 'npm run build' สไตล์เหล่านี้ควรอยู่ใน style.css แทน -->
     <style>
         body {
             background-color: #0b1121;
@@ -362,8 +372,7 @@
                             </div>
                             <div class="relative w-full h-[300px]">
                                 <canvas id="pnlChart" class="absolute inset-0 w-full h-full"></canvas>
-                                <canvas id="tradesChart"
-                                    class="absolute inset-0 w-full h-full pointer-events-none"></canvas>
+                                <!-- FIXED: Removed unused 'tradesChart' canvas that was overlapping -->
                             </div>
                         </div>
 
