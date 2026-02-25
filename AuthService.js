@@ -1,5 +1,5 @@
- import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, signInAnonymously } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 
 // --- FILE 1: AUTHENTICATION SERVICE ---
 export class AuthService {
@@ -10,9 +10,19 @@ export class AuthService {
         this.currentUser = null;
     }
 
+    // Google Login
     async login() {
         try {
             await signInWithPopup(this.auth, this.provider);
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    // NEW: Guest (Anonymous) Login
+    async loginAnonymous() {
+        try {
+            await signInAnonymously(this.auth);
         } catch (error) {
             throw error;
         }

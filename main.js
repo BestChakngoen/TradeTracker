@@ -26,7 +26,10 @@ export class TradeApp {
         this.auth.onStateChange((user) => {
             if (user) {
                 this.ui.showLogin(false);
-                document.getElementById('user-display-name').innerText = `// ${user.email}`;
+                
+                // UPDATED: Handle display name for Guest vs Google User
+                const displayName = user.isAnonymous ? '// GUEST' : `// ${user.email}`;
+                document.getElementById('user-display-name').innerText = displayName;
                 
                 // 1. Subscribe to Trades
                 this.data.subscribeTrades(user.uid, (data, meta) => {
@@ -69,6 +72,11 @@ export class TradeApp {
 
         // Button Clicks
         document.getElementById('btn-login').onclick = () => this.handleLogin();
+        
+        // NEW: Guest Login Button Listener
+        const btnGuest = document.getElementById('btn-login-guest');
+        if (btnGuest) btnGuest.onclick = () => this.handleLoginGuest();
+
         document.getElementById('btn-logout').onclick = () => this.auth.logout();
         document.getElementById('btn-copy-domain').onclick = () => this.copyDomain();
         document.getElementById('btn-add-trade').onclick = () => this.handleAddTrade();
@@ -150,6 +158,23 @@ export class TradeApp {
         try {
             await this.auth.login();
         } catch (error) {
+            if (error.code === 'auth/unauthorized-domain' || error.message.includes('unauthorized-domain')) {
+                this.ui.showAuthError(true);
+            } else {
+                this.ui.showAuthError(false);
+            }
+        }
+    }
+
+    // NEW: Guest Login Handler
+    async handleLoginGuest() {
+        const status = document.getElementById('login-status');
+        status.innerText = "Entering as Guest...";
+        document.getElementById('auth-error-box').classList.add('hidden');
+        try {
+            await this.auth.loginAnonymous();
+        } catch (error) {
+            console.error('Guest login failed:', error);
             if (error.code === 'auth/unauthorized-domain' || error.message.includes('unauthorized-domain')) {
                 this.ui.showAuthError(true);
             } else {
